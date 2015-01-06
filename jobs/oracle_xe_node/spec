@@ -1,0 +1,36 @@
+---
+name: oracle_xe_node
+templates:
+  ctl.erb: bin/ctl
+packages:
+- oracle-xe
+properties:
+#  networks.apps:
+#    description: "Used to get IP address for Oracle XE node "
+#    default: oracle-xe-network
+  oracle_xe.xe_install_download_url:
+    description: "URL to download the Oracle XE Database Install in RPM format "
+  oracle_xe.listener.port:
+    description: "Port of the XE instance"
+    default: 1521
+  oracle_xe.memory.pga_target:
+    description: "PGA Target Memory Size "
+    default: 172M
+  oracle_xe.memory.sga_target:
+    description: "SGA Target Memory Size "
+    default: 576M
+  oracle_xe.sysuser: 
+    description: "Password for the system admin of the Oracle XE instance"
+    default: welcome1
+  oracle_xe.ootb.tablespace.name: 
+    description: "Name of the default OOTB tablespace"
+    default: example
+  oracle_xe.ootb.tablespace.size: 
+    description: "Size of the default OOTB tablespace in MB"
+    default: 200
+  oracle_xe.ootb.user.name: 
+    description: "Name of the default OOTB user"
+    default: servicebroker
+  oracle_xe.ootb.user.passwd: 
+    description: "Password of the default OOTB user"
+    default: s3cr3t

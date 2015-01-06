@@ -1,0 +1,52 @@
+# abort script on any command that exits with a non zero value
+set -e -x
+
+
+# Copy over all the scripts completely into the BOSH_INSTALL_TARGET directory
+# It would be the /var/vcap/packages/oracle-xe folder
+cp -r scripts ${BOSH_INSTALL_TARGET}/
+
+#Update the nameserver to allow download of libraries and also the Oracle XE 11gR2 bits from outside
+echo nameserver 8.8.8.8 >> /etc/resolv.conf
+
+mkdir ${BOSH_INSTALL_TARGET}/download
+if [ -e "oracle-xe" ]; then
+  cp -a oracle-xe/* ${BOSH_INSTALL_TARGET}/download
+  pushd ${BOSH_INSTALL_TARGET}/download
+
+  oracle-xe-zip=`ls ./oracle-xe*zip 2>/dev/null`
+  if [ "$oracle-xe-zip" != "" ]; then
+
+    unzip oracle-xe*.rpm.zip
+    platform=`uname -a`
+    log_debug "Running on Platform: $platform"
+
+    #Check for Ubuntu Platform
+    uname -a |grep Ubuntu >/dev/null
+    isUbuntu=$?
+
+    which rpm
+    hasRpm=$?
+
+    if [ "$isUbuntu" == "0" -a "$hasRpm" != "0" ]; then
+
+      # Need to convert to debian package format
+      # Install Alien tool
+      if [ ! -e "/usr/bin/alien" ]; then
+        ln -s /usr/bin/awk /bin/awk
+        apt-get update --fix-missing
+        apt-get -y install alien libaio1 unixodbc vim bc unzip --fix-missing
+      fi
+
+      # Convert to debian package format
+      cd Disk1
+
+      # Create temporary directory and set that to TMPDIR as /tmp can be too small
+      oldTmp=${TMPDIR}
+      mkdir tmp
+      export TMPDIR=`pwd`/tmp
+      alien --scripts -d oracle-xe-*.rpm
+      export TMPDIR=$oldTmp
+    fi
+  fi 
+fi 

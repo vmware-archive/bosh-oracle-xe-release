@@ -1,0 +1,7 @@
+check process oracle_xe_sb
+  with pidfile /var/vcap/sys/run/oracle_xe_sb/pid
+  start program "/var/vcap/jobs/oracle_xe_sb/bin/ctl start"
+    with timeout 200 seconds
+  stop program "/var/vcap/jobs/oracle_xe_sb/bin/ctl stop"
+    with timeout 30 seconds
+  group vcap

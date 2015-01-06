@@ -1,0 +1,34 @@
+# abort script on any command that exit with a non zero value
+set -e
+
+if [[ `uname -a` =~ "x86_64" ]] ; then
+  archive="openjdk/openjdk-1.7.0_71.tar.gz"
+  echo "Using JDK 1.7 64-bit version"
+else
+  echo "Only 64-bit architectures are supported."
+  exit 1
+fi
+
+if [[ -f $archive ]] ; then
+  echo "Archive found"
+else
+  echo "Archive not found"
+  exit 1
+fi
+
+echo "Extracting archive..."
+cd openjdk
+tar xzf *.tar.gz
+pwd
+ls 
+
+ls bin
+bin/java -Xmx64M -version 
+
+if [[ -d bin && `bin/java -Xmx64M -version 2>&1` =~ "OpenJDK 64-Bit Server" && $? == 0 ]]; then
+  cd ..
+  cp -r openjdk ${BOSH_INSTALL_TARGET}
+else
+  echo "JVM is not properly packaged"
+  exit 1
+fi

@@ -1,0 +1,264 @@
+#!/bin/bash
+set +e
+
+<%
+  def discover_external_ip
+    networks = spec.networks.marshal_dump
+    _, network = networks.find do |_name, network_spec|
+      network_spec.default
+    end
+    if !network
+      _, network = networks.first
+    end
+    if !network
+      raise "Could not determine IP via network spec: #{networks}"
+    end
+    network.ip
+  end
+  my_ip = discover_external_ip
+%>
+
+
+RUN_DIR=/var/vcap/sys/run/oracle_xe_node
+LOG_DIR=/var/vcap/sys/log/oracle_xe_node
+PIDFILE=${RUN_DIR}/pid
+
+mkdir -p $RUN_DIR $LOG_DIR
+chown -R vcap:vcap $RUN_DIR $LOG_DIR
+
+export ORACLE_XE_INSTALL_HOME=/var/vcap/packages/oracle-xe/
+
+# Not relying on network name to arrive at hostip
+# Set the ip to HOSTNAME to avoid listener getting bound to some internal only hostname
+export HOSTNAME=<%="#{my_ip}"%>
+export XE_HOST_IP=<%="#{my_ip}"%>
+
+export ORACLE_XE_DOWNLOAD_URL=<%=properties.oracle_xe.xe_install_download_url %>
+
+export XE_HOST_PORT=<%=properties.oracle_xe.listener.port %>
+export PGA_TARGET=<%=properties.oracle_xe.memory.pga_target %>
+export SGA_TARGET=<%=properties.oracle_xe.memory.sga_target %>
+
+export XE_SYS_USER=<%=properties.oracle_xe.sysuser %>
+
+export XE_DEFAULT_TABLESPACE_NAME=<%=properties.oracle_xe.ootb.tablespace.name %>
+export XE_DEFAULT_TABLESPACE_SIZE=<%=properties.oracle_xe.ootb.tablespace.size %>
+export XE_DEFAULT_USER=<%=properties.oracle_xe.ootb.user.name %>
+export XE_DEFAULT_PASSWD=<%=properties.oracle_xe.ootb.user.passwd %>
+
+export DEBUG_LOG=$LOG_DIR/oracle_xe_node.log
+
+touch $DEBUG_LOG
+chmod -R 755 /var/vcap/sys
+chmod 777 $DEBUG_LOG
+
+function log_debug() {
+  echo `date` $1 >> $DEBUG_LOG
+}
+
+log_debug "Kicking off ctl script as `whoami` with $1"
+log_debug "Download url provided: ${ORACLE_XE_DOWNLOAD_URL}"
+
+case $1 in
+
+  start)
+
+    pushd $ORACLE_XE_INSTALL_HOME
+    if [ ! -e "/etc/sysctl.d/60-oracle.conf" ]; then
+      cp scripts/conf/chkconfig /sbin/
+      # Seems centos does not have the /etc/sysctl.d folder
+      # possible this is only required for Debian, better to create
+      if [ ! -d "/etc/sysctl.d" ]; then
+        mkdir /etc/sysctl.d
+      fi
+      cp scripts/conf/60-oracle.conf /etc/sysctl.d/
+      cp scripts/sql/*.sql /tmp
+      log_debug "Copied over config files to sbin and /etc/sysctl.d folders "
+    fi
+
+    cd download
+
+    if [ ! -d "Disk1" ]; then
+
+      oracle_xe_zip=`ls ./oracle*zip 2>/dev/null`
+      if [ "${oracle_xe_zip}" == "" ]; then
+        installFile=`basename ${ORACLE_XE_DOWNLOAD_URL}`
+        log_debug "Downloading Oracle Install from : ${ORACLE_XE_DOWNLOAD_URL}"
+        curl -k ${ORACLE_XE_DOWNLOAD_URL} -o ${installFile}
+        downloadStatus=$?
+
+        if [ "$downloadStatus" != "0" ]; then
+          log_debug "Download of the binary not successfull from ${ORACLE_XE_DOWNLOAD_URL}, exiting...."
+          exit 1
+        fi
+
+        log_debug "Downloaded Oracle Install and saved as : ${installFile}"
+        oracle_xe_zip=$installFile
+      fi
+
+      unzip ${oracle_xe_zip}
+      log_debug "Unzipped the Oracle Install zip : ${oracle_xe_zip}"
+    fi
+
+    cd Disk1
+    if [ ! -e "/tmp/xe.rsp" ]; then
+      cp response/xe.rsp /tmp
+    fi
+
+    if [ ! -e "/etc/init.d/oracle-xe" ]; then
+      ln -s /usr/bin/awk /bin/awk
+      mkdir /var/lock/subsys
+      touch /var/lock/subsys/listener
+
+      # Check for /var/vcap/store for persistence store
+      # Otherwise go with /var/vcap/data which would be an ephemeral disk
+      STORE_PATH=/var/vcap/store
+      if [ ! -e ${STORE_PATH} ]; then
+        STORE_PATH=/var/vcap/data
+      fi
+
+      mkdir ${STORE_PATH}/oracle-xe-node-${XE_HOST_IP}
+      rm -rf /u01
+      ln -s ${STORE_PATH}/oracle-xe-node-${XE_HOST_IP} /u01
+      chmod -R 777 /u01
+
+      #dd if=/dev/zero of=/home/swapfile bs=1024 count=1048576
+      #mkswap /home/swapfile
+      #swapon /home/swapfile
+      #swapon -a
+      #cp /etc/fstab /etc/fstab.backup_`date +%N`
+      #echo '/home/swapfile swap swap defaults 0 0'
+
+      log_debug "Finished setting env and swap files "
+
+      pushd $ORACLE_XE_INSTALL_HOME/download/Disk1
+
+      platform=`uname -a`
+      log_debug "Running on Platform: $platform"
+
+      #Check for Ubuntu Platform
+      uname -a |grep Ubuntu
+      isUbuntu=$?
+
+      which rpm
+      hasRpm=$?
+
+      if [ "$isUbuntu" == "0" -a "$hasRpm" != "0" ]; then
+        # Need to convert to debian package format
+
+        deb_file=`ls oracle-xe*.deb`
+        if [ "$deb_file" == "" ]; then
+
+          # No Install with Debian file format exists
+          # check for alien tools to convert rpm to debian
+          if [ ! -e "/usr/bin/alien" ]; then
+            echo nameserver 8.8.8.8 >> /etc/resolv.conf
+            ln -s /usr/bin/awk /bin/awk
+            apt-get update --fix-missing
+            log_debug "Installing alien, libaio1 and other tools for rpm to deb conversion"
+            apt-get -y install alien libaio1 unixodbc vim bc unzip --fix-missing
+            log_debug "Installed alien and other tools for rpm to deb conversion"
+          fi
+
+          oldTmp=${TMPDIR}
+          mkdir tmp
+          export TMPDIR=`pwd`/tmp
+          log_debug "Running alien to convert rpm to deb package against Oracle XE install"
+          alien --scripts -d oracle-xe-*.rpm
+          export TMPDIR=$oldTmp
+          log_debug "Finished running alien to convert rpm to deb package"
+        else
+          log_debug "Deb package already created, not running alien to convert from rpm"
+        fi
+
+        log_debug "Starting install of Oracle XE using Debian's dpkg installer"
+        dpkg --install oracle-xe*.deb
+        log_debug "Finished Installing Oracle XE using Debian's dpkg installer"
+
+      else
+        # Assume this is RedHat Centos Platform
+        yum -y install libaio bc flex
+        log_debug "Starting install of Oracle XE using Centos's rpm installer"
+        rpm -Uvh oracle-xe*.rpm
+        log_debug "Finished Installing Oracle XE using Centos's rpm installer"
+
+      fi
+
+      export ORACLE_ENV_SH=`find /u01/ -name oracle_env.sh`
+      export ORACLE_HOME=`dirname $ORACLE_ENV_SH`/..
+
+      mkdir /u01/app/oracle/flash_recovery_area
+      chown -R oracle:dba /u01/
+
+      sed -i.bak "s/<value required>/${XE_SYS_USER}/g" /tmp/xe.rsp
+
+      sed -i.bak "s/memory_target.*$/pga_aggregate_target=${PGA_TARGET}M\nsga_target=${SGA_TARGET}M\n/;  \
+           s/ORCLXDB/XE/g;s/'ORCL'/'XE'/"          \
+           ${ORACLE_HOME}/config/scripts/init*.ora \
+           ${ORACLE_HOME}/dbs/init.ora
+
+      log_debug "Finished running sed to update the init.ora files for the pga/sga memory settings"
+
+      sed -i.bak "s/XE_DEFAULT_TABLESPACE_NAME/${XE_DEFAULT_TABLESPACE_NAME}/g; \
+            s/XE_DEFAULT_TABLESPACE_SIZE/${XE_DEFAULT_TABLESPACE_SIZE}/g;       \
+            s/XE_DEFAULT_USER/${XE_DEFAULT_USER}/g;                             \
+            s/XE_DEFAULT_PASSWD/${XE_DEFAULT_PASSWD}/g"                         \
+            /tmp/create_ootb_user.sql;
+
+      sed -i.bak "s/XE_HOST_IP/${XE_HOST_IP}/g;s/XE_HOST_PORT/${XE_HOST_PORT}/g;" \
+            /tmp/update_db_settings.sql;
+
+      log_debug "Updated sql scripts for additional Oracle XE config changes"
+
+      # Oracle creates pipes and other files under /tmp/.oracle and /var/tmp/.oracle for its listeners, need file permissions
+      chmod -R 777 /u01
+      chmod -R 1777 /tmp
+      chmod +x $ORACLE_XE_INSTALL_HOME/*
+
+      # Provide permission for the listener to create .oracle file under /var/tmp
+      chmod -R 1777 /var/tmp
+
+      log_debug "Configuring the Oracle-XE Install"
+      /etc/init.d/oracle-xe configure responseFile=/tmp/xe.rsp
+      log_debug "Finished Configuring the Oracle-XE Install!!"
+
+      $ORACLE_XE_INSTALL_HOME/scripts/bin/setup_oracle_env.sh
+
+      # Provide permissions for redirecting sqlplus output to the log file
+      chmod -R 755 /var/vcap/sys
+      chmod 777 $DEBUG_LOG
+
+      log_debug "Running sqlplus with oracle userid to finish off the configuration tasks on Oracle XE "
+      su -c "sqlplus '/ as sysdba' @/tmp/create_ootb_user.sql 2>&1 >> $DEBUG_LOG; sqlplus '/ as sysdba' @/tmp/update_db_settings.sql 2>&1 >> $DEBUG_LOG" - oracle
+      log_debug "Finished configuration changes on Oracle XE using sqlplus"
+
+    else
+        log_debug "Not rerunning install or configurations on Oracle XE"
+    fi
+
+    # Oracle creates pipes and other files under /tmp/.oracle and /var/tmp/.oracle for its listeners, need file permissions
+    # Sometimes the /var/tmp/ directory does not change permission even after root changes permissions,
+    # better to delete and recreate the directory
+    rm -rf /var/tmp
+    mkdir /var/tmp
+    chmod -R 1777 /var/tmp
+
+    log_debug "Starting off the Oracle-XE Service"
+    /etc/init.d/oracle-xe start 2>&1 >> $DEBUG_LOG
+    sudo - oracle -c "lsnrctl start"
+    ps -ef | grep "tnslsnr LISTENER" | grep -v "grep" | awk ' { print $2 }'  > $PIDFILE
+    ;;
+
+  stop)
+
+    log_debug "Stopping the oracle-xe service "
+    sudo - oracle -c "lsnrctl stop"
+    /etc/init.d/oracle-xe stop
+
+    rm -f $PIDFILE
+    ;;
+
+  *)
+    echo "Usage: ctl {start|stop}" ;;
+
+esac

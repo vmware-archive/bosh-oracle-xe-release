@@ -1,0 +1,11 @@
+---
+name: oracle-xe
+
+dependencies: []
+
+files:
+- scripts/conf/chkconfig
+- scripts/conf/60-oracle.conf
+- scripts/bin/setup_oracle_env.sh
+- scripts/sql/create_ootb_user.sql
+- scripts/sql/update_db_settings.sql

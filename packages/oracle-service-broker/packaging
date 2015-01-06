@@ -1,0 +1,20 @@
+# abort script on any command that exit with a non zero value
+set -e
+
+# Copy over the service creation template into the BOSH_INSTALL_TARGET directory
+# It would be copied into the /var/vcap/packages/oracle-xe-sb folder
+cp -r templates ${BOSH_INSTALL_TARGET}/
+
+ORACLE_SB_APP_DIR="oracle-service-broker"
+archive=`ls ${ORACLE_SB_APP_DIR}/*.jar`
+
+if [  "$archive" != "" ] ; then
+  echo "oracle-service-broker.jar found"
+else
+  echo "oracle-service-broker.jar not found"
+  exit 1
+fi
+
+cp -r ${ORACLE_SB_APP_DIR} ${BOSH_INSTALL_TARGET}
+
+

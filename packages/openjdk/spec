@@ -1,0 +1,7 @@
+---
+name: openjdk
+
+dependencies: []
+
+files:
+- openjdk/openjdk-1.7.0_71.tar.gz

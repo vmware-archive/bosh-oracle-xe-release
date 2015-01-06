@@ -1,0 +1,15 @@
+
+{
+"name" : "PLAN_ID",
+"description" : "PLAN_ID plan on XE_HOST_ADDR",
+"metadata" : {
+    "name" : "PLAN_ID",
+    "displayName" : "PLAN_ID",
+    "description" : "PLAN_ID plan on XE_HOST_ADDR",
+    "init_size" : "INIT_SPACE_SIZEM",
+    "max_size" : "MAX_SPACE_SIZEM",
+    "connections" : MAX_CONCURRENT_CONN,
+    "bullets" : ["INIT_SPACE_SIZE megabytes of initial space", "MAX_SPACE_SIZE megabytes of max space","MAX_CONCURRENT_CONN simultaneous connections"]
+    }
+}
+
