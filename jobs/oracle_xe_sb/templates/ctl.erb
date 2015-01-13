@@ -27,6 +27,7 @@ chown -R vcap:vcap $RUN_DIR $LOG_DIR
 
 export OPENJDK_INSTALL_HOME=/var/vcap/packages/openjdk/
 export ORACLE_SB_INSTALL_HOME=/var/vcap/packages/oracle-service-broker/
+export JAVA_RUN_ARG=<%=properties.oracle_xe_sb.run_arg %>
 
 export OPENJDK=openjdk
 export ORACLE_SB_APP_DIR="oracle-service-broker"
@@ -108,25 +109,30 @@ case $1 in
     if [ -d $ORACLE_SB_APP_DIR ]; then
       ORACLE_SB_APP=`ls ${ORACLE_SB_APP_DIR}/*.jar`
       ORACLE_SB_APP_PATH=${ORACLE_SB_INSTALL_HOME}/${ORACLE_SB_APP}
+      ORACLE_SB_EXPLODED_APP_PATH=${ORACLE_SB_INSTALL_HOME}/exploded
+      mkdir -p $ORACLE_SB_EXPLODED_APP_PATH
     else
       echo "Oracle Service Broker App Jar is not properly packaged"
       exit 1
     fi
     log_debug "Located App at: ${ORACLE_SB_APP_PATH}"
 
-    mkdir -p /var/vcap/data/tmp
+    pushd $ORACLE_SB_EXPLODED_APP_PATH
+    # openjdk or some weird jar problem appears to corrupt the nested jar files when used to update the oracle jdbc driver
+    #    java.lang.IllegalStateException: Unable to open nested compressed entry lib/jboss-logging-3.1.3.GA.jar
+    #     at org.springframework.boot.loader.jar.JarFile.createJarFileFromFileEntry(JarFile.java:378)
+    #     at org.springframework.boot.loader.jar.JarFile.createJarFileFromEntry(JarFile.java:355)
+    #     at org.springframework.boot.loader.jar.JarFile.getNestedJarFile(JarFile.java:341)
+    #     at org.springframework.boot.loader.archive.JarFileArchive.getNestedArchive(JarFileArchive.java:108)
+    #     at org.springframework.boot.loader.archive.JarFileArchive.getNestedArchives(JarFileArchive.java:92)
+    #     at org.springframework.boot.loader.ExecutableArchiveLauncher.getClassPathArchives(ExecutableArchiveLauncher.java:68)
+    #     at org.springframework.boot.loader.Launcher.launch(Launcher.java:60)
+    #     at org.springframework.boot.loader.JarLauncher.main(JarLauncher.java:45)
+    # Unzip the app contents and use the exploded path in classpath to start the java type service broker
+    unzip ${ORACLE_SB_APP_PATH}
+    log_debug "Extracted App contents under $ORACLE_SB_EXPLODED_APP_PATH"
 
-    cp -r templates/config /var/vcap/data/tmp
-    sed -i.bak "s/XE_ADMIN_USER/${XE_ADMIN_USER}/g;           \
-            s/XE_ADMIN_PASSWD/${XE_ADMIN_PASSWD}/g;           \
-            s/XE_SB_USER/${XE_SB_USER}/g;           \
-            s/XE_SB_PASSWD/${XE_SB_PASSWD}/g;       \
-            s/XE_HOST_ADDR/${XE_HOST_ADDR}/g;                 \
-            s/XE_HOST_PORT/${XE_HOST_PORT}/g;                 \
-            s/XE_SERVICE_SID/${XE_SERVICE_SID}/g"             \
-            /var/vcap/data/tmp/{SB_APP_CONFIG}
-
-    cp templates/${SB_APP_ENV} /var/vcap/data/tmp
+    cp -r $ORACLE_SB_INSTALL_HOME/templates/config .
     sed -i.bak "s/XE_ADMIN_USER/${XE_ADMIN_USER}/g;           \
             s/XE_ADMIN_PASSWD/${XE_ADMIN_PASSWD}/g;           \
             s/XE_SB_USER/${XE_SB_USER}/g;                     \
@@ -134,13 +140,8 @@ case $1 in
             s/XE_HOST_ADDR/${XE_HOST_ADDR}/g;                 \
             s/XE_HOST_PORT/${XE_HOST_PORT}/g;                 \
             s/XE_SERVICE_SID/${XE_SERVICE_SID}/g"             \
-            /var/vcap/data/tmp/{SB_APP_ENV}
+            ${SB_APP_CONFIG}
 
-    $JAVA_HOME/bin/jar uvf ${ORACLE_SB_APP_PATH} ${SB_APP_CONFIG}
-    log_debug "Updated App with correct db connectivity information changes"
-
-    pushd /var/vcap/data/tmp
-    mkdir lib
     curl -k ${OJDBC_DRIVER_DOWNLOAD_URL} -o lib/ojdbc.jar
     if [ "$?" == "0" ]; then
       log_debug "Successfully downloaded Oracle JDBC Driver"
@@ -148,13 +149,29 @@ case $1 in
       log_debug "Unable to download Oracle JDBC Driver from url: ${OJDBC_DRIVER_DOWNLOAD_URL}"
     fi
 
-    $JAVA_HOME/bin/jar uvf ${ORACLE_SB_APP_PATH} lib/ojdbc.jar
-    log_debug "Updated App with ojdbc driver "
+    log_debug "Added Oracle jdbc driver to App bits"
+    log_debug "Updated App with correct db connectivity information changes"
     popd
 
+    mkdir -p /var/vcap/data/tmp
+    cp -r templates/${SB_APP_ENV} /var/vcap/data/tmp
+    pushd /var/vcap/data/tmp
+    sed -i.bak "s/XE_ADMIN_USER/${XE_ADMIN_USER}/g;           \
+            s/XE_ADMIN_PASSWD/${XE_ADMIN_PASSWD}/g;           \
+            s/XE_SB_USER/${XE_SB_USER}/g;                     \
+            s/XE_SB_PASSWD/${XE_SB_PASSWD}/g;                 \
+            s/XE_HOST_ADDR/${XE_HOST_ADDR}/g;                 \
+            s/XE_HOST_PORT/${XE_HOST_PORT}/g;                 \
+            s/XE_SERVICE_SID/${XE_SERVICE_SID}/g"             \
+            /var/vcap/data/tmp/${SB_APP_ENV}
+
+    cp /var/vcap/data/tmp/${SB_APP_ENV} $ORACLE_SB_INSTALL_HOME
+    popd
+
+
     log_debug "Starting off the Oracle XE Service Broker App on ${SB_HOST_IP}:${LISTEN_PORT}"
-    source ./${SB_APP_ENV}
-    nohup $JAVA_BINARY  -verbose:gc -Xms${MIN_HEAP}m -Xmx${MAX_HEAP}m -Dserver.port=${LISTEN_PORT} -jar ${ORACLE_SB_APP_PATH} 2>&1 >> $DEBUG_LOG &
+    source $ORACLE_SB_INSTALL_HOME/${SB_APP_ENV}
+    nohup $JAVA_BINARY  -verbose:gc -Xms${MIN_HEAP}m -Xmx${MAX_HEAP}m -Dserver.port=${LISTEN_PORT} -classpath ${ORACLE_SB_EXPLODED_APP_PATH}:${ORACLE_SB_EXPLODED_APP_PATH}/lib $JAVA_RUN_ARG 2>&1 >> $DEBUG_LOG &
     APP_PID=`ps -ef | grep "java" | grep -v "grep" | awk ' { print $2 }' `
     log_debug "Kicked off the Oracle XE Service Broker App with Pid: $APP_PID"
     echo $APP_PID > $PIDFILE
@@ -212,13 +229,6 @@ case $1 in
 
 
 
-#    if [ "$plan_id" == "" ]; then
-#      plan_creation_output=`curl ${app_catalog_url}/services/${service_id}/plans -X POST -H "Content-Type:application/json" -d @${ORACLE_SB_INSTALL_HOME}/service_plan.json`
-#      log_debug "Service Plan created!!"
-#      log_debug "Service Plan details: ${plan_creation_output}"
-#    else
-#      log_debug "Existing Plan Id : $plan_id "
-#    fi
     ;;
 
   stop)

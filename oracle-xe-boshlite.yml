@@ -5,7 +5,7 @@ meta:
 
 director_uuid: DIRECTOR_UUID # EDIT ME
 
-name: oracle-xe-complete
+name: oracle-xe
 
 releases:
 - name: oracle-xe
@@ -369,6 +369,7 @@ properties:
   oracle_xe_sb:
     jdbc_driver_download_url: "http://12.1.1.1:7777/fileserver/oracle-xe/ojdbc7.jar" # EDIT ME
     listen_port: 9000
+    run_arg: "org.springframework.boot.loader.JarLauncher" # EDIT ME
     service:
       service_port: 1521
       service_sid: XE

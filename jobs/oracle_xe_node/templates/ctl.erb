@@ -245,14 +245,14 @@ case $1 in
 
     log_debug "Starting off the Oracle-XE Service"
     /etc/init.d/oracle-xe start 2>&1 >> $DEBUG_LOG
-    sudo - oracle -c "lsnrctl start"
+    su -c "lsnrctl start" - oracle
     ps -ef | grep "tnslsnr LISTENER" | grep -v "grep" | awk ' { print $2 }'  > $PIDFILE
     ;;
 
   stop)
 
     log_debug "Stopping the oracle-xe service "
-    sudo - oracle -c "lsnrctl stop"
+    su -c "lsnrctl stop" - oracle
     /etc/init.d/oracle-xe stop
 
     rm -f $PIDFILE

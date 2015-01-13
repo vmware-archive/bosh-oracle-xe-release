@@ -10,6 +10,9 @@ properties:
     description: "Download url for the jdbc driver"
   oracle_xe_sb.listen_port:
     description: "Listen Port of the SB App instance"
+  oracle_xe_sb.run_arg:
+    description: "Argument for kicking off the SB App instance"
+    default: "org.springframework.boot.loader.JarLauncher"
   oracle_xe_sb.memory.min_heap:
     description: "Min Heap in MB"
     default: 1024
