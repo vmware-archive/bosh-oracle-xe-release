@@ -8,6 +8,8 @@ blobs
 .dev_builds
 .idea
 .DS_Store
+*.pivotal
+tmp
 .final_builds/jobs/**/*.tgz
 .final_builds/packages/**/*.tgz
 *.swp
