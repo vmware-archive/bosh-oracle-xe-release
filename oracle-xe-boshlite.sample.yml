@@ -3,7 +3,7 @@ meta:
     name: bosh-warden-boshlite-ubuntu-trusty-go_agent
     version: latest
 
-director_uuid: DIRECTOR_UUID # EDIT ME
+director_uuid: 35b3e645-7b07-435a-bfab-69f718e0e8ef # EDIT ME
 
 name: oracle-xe
 

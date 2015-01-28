@@ -1,0 +1,44 @@
+properties:
+  oracle_xe:
+    # EDIT ME - download url to pull in Oracle XE Binary for Linux
+    xe_install_download_url: "http://12.1.1.1:7777/fileserver/oracle-xe/oracle-xe-11.2.0-1.0.x86_64.rpm.zip"
+    listener:
+      port: 1521
+    memory:
+      pga_target: 150
+      sga_target: 550
+    sysuser: welcome1
+    ootb:
+     tablespace:
+       name: servicebroker
+       size: 256
+     user:
+       name: servicebroker
+       passwd: s3cr3t
+  oracle_xe_sb:
+    # EDIT ME - download url to pull in Oracle JDBC Driver
+    jdbc_driver_download_url: "http://12.1.1.1:7777/fileserver/oracle-xe/ojdbc7.jar" # EDIT ME
+    listen_port: 9000
+    run_arg: "org.springframework.boot.loader.JarLauncher" # EDIT ME
+    service:
+      service_port: 1521
+      service_sid: XE
+    memory:
+      min_heap: 512
+      max_heap: 512
+    credentials:
+      system:
+        username: system
+        passwd: welcome1
+      sbuser:
+        username: servicebroker
+        passwd: s3cr3t
+      on_demand_service_plans:
+      - service_plan_name: Standard
+        init_space_size: 64
+        max_space_size: 512
+        max_concurrent_conn: 5
+      - service_plan_name: Platinum
+        init_space_size: 64
+        max_space_size: 512
+        max_concurrent_conn: 15

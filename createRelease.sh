@@ -3,6 +3,8 @@
 # For use to create final release tarball
 CREATE_FINAL_TARBALL=true
 VERSION=11.2
+PLATFORM=warden
+#PLATFORM=vsphere
 RELEASE_NAME=oracle-xe
 
 echo "Cleanup previous release ..."

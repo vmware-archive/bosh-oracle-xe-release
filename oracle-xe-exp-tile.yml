@@ -7,6 +7,7 @@ stemcell:                                                  # [3]
   #name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
   name: bosh-vsphere-esxi-centos-go_agent
   #file: bosh-stemcell-2690.3-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+  # Download from https://s3.amazonaws.com/bosh-jenkins-artifacts/bosh-stemcell/vsphere/bosh-stemcell-2690.2-vsphere-esxi-centos-go_agent.tgz
   file: bosh-stemcell-2690.2-vsphere-esxi-centos-go_agent.tgz
   version: '2690.2'
 releases:                                                  # [5]

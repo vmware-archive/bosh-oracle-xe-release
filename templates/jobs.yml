@@ -1,0 +1,16 @@
+networks: (( merge ))
+
+meta:
+  environment: ~
+  job_templates: (( merge ))
+
+jobs:
+  - name: oracle-xe
+    templates:
+    - name: oracle_xe_node
+    - name: oracle_xe_sb
+    instances: 1
+    resource_pool: small_z1
+    networks:
+      - name: oracle-xe-network
+

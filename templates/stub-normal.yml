@@ -1,0 +1,18 @@
+---
+meta:
+  environment: NAME
+  service_name: NAME
+  security_groups:
+    - default
+  job_templates:
+    - name: oracle-xe
+      release: oracle-xe
+  stemcell:
+    name: STEMCELL
+
+director_uuid: PLACEHOLDER-DIRECTOR-UUID
+releases:
+  - name: oracle-xe
+    version: latest
+properties:
+  oracle-xe: {}

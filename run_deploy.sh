@@ -8,8 +8,11 @@ CREATE_FINAL_TARBALL=true
 VERSION=11.2
 RELEASE_NAME=oracle-xe
 
-DEPLOYMENT_NAME=oracle-xe-complete
-DEPLOYMENT_MANIFEST=`pwd`/oracle-xe-boshlite.yml
+PLATFORM=warden
+#PLATFORM=vsphere
+
+DEPLOYMENT_NAME=oracle-xe-${PLATFORM}
+DEPLOYMENT_MANIFEST=`pwd`/oracle-xe-${PLATFORM}-manifest.yml
 
 if [ "$CLEAN_UP" == "true" ]; then
   bosh deployment $DEPLOYMENT_MANIFEST
@@ -32,9 +35,3 @@ if [ "$CREATE_FINAL_TARBALL" == "true" ]; then
   # To create a final tarball release
   bosh -n create release --name $RELEASE_NAME --version $VERSION --with-tarball --final --force
 fi
-
-# Working with blobs...
-# bosh add blob packages/openjdk/openjdk-1.8.0_M7.tar.gz # this will go to the root
-# bosh add blob packages/openjdk/openjdk-1.8.0_M7.tar.gz openjdk  # this will go under the openjdk folder
-# bosh add blob packages/oracle-service-broker/oracleservicebroker/oracle-service-broker-0.1.0.jar  oracle-service-broker
-# bosh upload blobs

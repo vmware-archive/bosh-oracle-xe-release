@@ -25,14 +25,16 @@ rm -rf releases/* .final_builds/* .dev_builds/*
 bosh -n create release --name oracle-xe --version 11.2 --with-tarball --final
 bosh -n upload release releases/oracle-xe/oracle-xe-11.2.tgz
 ```
-Or use the createRelease.sh script (modify as necessary) to create the releease, followed by deployRelease (use the appropriate deployment manifest and edit the director UUID and otehr stuch configurations).
+Or use the createRelease.sh script (modify as necessary) to create the release, followed by deployRelease (use the appropriate deployment manifest and edit the director UUID and otehr stuch configurations).
 
 ## Download Oracle XE Binary install
 Download the Oracle XE install binary for Linux x64 platform and make it available on the network for download by Bosh.
 Also, download the Oracle Thin JDBC Driver version that would work with 11g or 12c DB release (in jar file format) and make it available on the network for download by Bosh.
 
-Edit the xe_install_download_url to point to the correct location of the XE binary install (in rpm format) in the bosh deployment plan under properties -> oracle_xe section.
-Edit the jdbc_driver_download_url to point to the correct location of the jdbc driver (in jar format) in the bosh deployment plan under properties -> oracle_xe_sb section.
+## Edit the oracle-xe-properties.yml 
+
+Edit the xe_install_download_url to point to the correct location of the XE binary install (in rpm format) in the templates/oracle-xe-properties.yml file under properties -> oracle_xe section.
+Edit the jdbc_driver_download_url to point to the correct location of the jdbc driver (in jar format) in the templates/oracle-xe-properties.yml file under properties -> oracle_xe_sb section.
 
 ```
 properties:
@@ -43,21 +45,25 @@ properties:
     jdbc_driver_download_url: "http://12.1.1.1:7777/fileserver/oracle-xe/ojdbc7.jar"  
 ```
 
-## Deploy to Bosh-lite
-As mentioned previously, edit the relevant bits inside the deployment file to correctly configure the Bosh Director UUID, network addresses, database host, port, service, user credentials as needed (look for EDIT ME tags).
+## Deployment to Bosh
+As mentioned previously, edit the relevant bits inside the templates/oracle-xe-properties.yml  and then use the `make_manifest` script to generate for the right target (provide the platform: 'warden' or 'vsphere' or 'aws-ec2'). Run `bosh status` before running `make_manifest`.
+
+* To deploy to bosh-lite
 ```
-bosh -n deploy oracle-xe-boshlite.yml
+./make_manifest warden
+bosh -n deploy oracle-xe-warden-manifest.yml
 ```
 
-## Deploy to vSphere
-Edit the relevant bits inside the deployment file to correctly configure the Bosh Director UUID, network addresses, database host, port, service, user credentials as needed (look for EDIT ME tags) when deploying on VSphere.
+* To deploy to vSphere
 ```
-bosh -n deploy oracle-xe-vSphere.yml
+./make_manifest vsphere
+bosh -n deploy oracle-xe-vsphere-manifest.yml
 ```
 
 ## Create Oracle XE Ops Manager Tile
 Edit the relevant bits inside the oracle-xe-tile.yml file if necessary and then run the createTile.sh script to generate the tile.
 The script would download the bosh vSphere Centos stemcell, pull the release tarball and the tile to create the `.pivotal` file.
-Import the .pivotal tile into Ops Manager.
+Import the .pivotal tile into Dev Ops Manager instance (non-Production env)
+* Important: Backup Ops Manager configurations before proceeding with import of the new tile to recover in case of errors.
 
 
