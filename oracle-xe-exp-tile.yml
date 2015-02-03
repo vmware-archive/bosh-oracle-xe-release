@@ -265,8 +265,6 @@ job_types:                                                 # [11]
           username: (( sb_user.value ))
           passwd: (( sb_password.secret ))
       on_demand_service_plans: (( on_demand_service_plans_collection.value ))
-#        max_space_size: (( default_plan_max_space_size.value ))
-#        max_concurrent_conn: (( default_plan_max_concurrent_conn.value ))
 
 - name: compilation
   resource_label: compilation

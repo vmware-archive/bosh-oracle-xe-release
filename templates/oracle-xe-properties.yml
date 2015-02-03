@@ -1,7 +1,7 @@
 properties:
   oracle_xe:
     # EDIT ME - download url to pull in Oracle XE Binary for Linux
-    xe_install_download_url: "http://12.1.1.1:7777/fileserver/oracle-xe/oracle-xe-11.2.0-1.0.x86_64.rpm.zip"
+    xe_install_download_url: "http://12.1.1.1:7777/fileserver/oracle-xe/oracle-xe-11.2.0-1.0.x86_64.rpm.zip" # EDIT ME
     listener:
       port: 1521
     memory:
