@@ -1,0 +1,189 @@
+#!/bin/bash
+set +e -x
+
+SCRIPT_DIR=$(dirname $0)
+. $SCRIPT_DIR/deploy_internal_broker.sh
+
+# Re-initialize variables as deploy_internal_broker might have changed things..
+. $SCRIPT_DIR/init.sh
+
+export BROKER_USER=<%= properties.oracle_xe_broker.broker.user %>
+export BROKER_PASSWD=<%= properties.oracle_xe_broker.broker.password %>
+export SECURITY_USER_NAME=<%= properties.oracle_xe_broker.broker.user %>
+export SECURITY_USER_PASSWORD=<%= properties.oracle_xe_broker.broker.password %>
+
+export CREATE_OPEN_SECURITY_GROUP=<%= properties.oracle_xe_broker.create_open_security_group %>
+
+export EXPLODED_APP_FOLDER="exploded-app-contents"
+
+### CUSTOM_VARIABLE_BEGIN_MARKER
+export SERVICEBROKER_SERVICEID=<%= properties.oracle_xe_broker.SERVICEBROKER_SERVICEID %>
+
+### CUSTOM_VARIABLE_END_MARKER
+
+export CF_HOME=`pwd`/home/cf
+mkdir -p $CF_HOME
+
+# Following variables would be replaced based on blobs that get added and are considered as app bits
+# Modify extension type for App file - modify as needed
+APP_PREFIX_NAME=cf-subway
+EXTENSION_TYPE=zip
+
+TARGET_APP=${APP_PREFIX_NAME}.${EXTENSION_TYPE}
+JOB_NAME=deploy-service-broker
+PACKAGE_NAME_SUFFIX=service_broker
+PACKAGE_PATH=`echo /var/vcap/packages/subway_${PACKAGE_NAME_SUFFIX}`
+
+RUN_DIR=/var/vcap/sys/run/$JOB_NAME
+LOG_DIR=/var/vcap/sys/log/$JOB_NAME
+PIDFILE=${RUN_DIR}/pid
+
+export DEBUG_LOG=$LOG_DIR/deploy-service-broker.log
+
+mkdir -p $RUN_DIR $LOG_DIR
+chown -R vcap:vcap $RUN_DIR $LOG_DIR
+
+function log_debug() {
+  echo `date` $1 >> $DEBUG_LOG
+}
+
+function authenticate_and_target() {
+  cf api $API_ENDPOINT <% if properties.ssl.skip_cert_verify %>--skip-ssl-validation<% end %>
+  cf auth $ADMIN_USER $ADMIN_PASSWORD
+  cf create-org $ORG
+  cf target -o $ORG
+  cf create-space $SPACE
+  cf target -s $SPACE
+}
+
+function create_quota() {
+  cf create-quota $QUOTA -m ${ORG_QUOTA}m -r 10 -s 10
+  cf update-quota $QUOTA -m ${ORG_QUOTA}m -r 10 -s 10 --disallow-paid-service-plans
+  cf set-quota $ORG $QUOTA
+}
+
+function create_open_security_group() {
+  if [ "${CREATE_OPEN_SECURITY_GROUP}" == "true" ]; then
+    echo "Creating open security group"
+
+    cf create-security-group all_open $PACKAGE_PATH/templates/all_open.json
+    cf bind-running-security-group all_open
+  else
+    echo "Not creating open security group"
+  fi
+}
+
+function provision_and_bind_db() {
+  db_plan=`cf marketplace | grep p-mysql | awk '{ print $2 }' | sed 's/,//g'`
+  if [ "$db_plan" != "" ]; then
+    cf create-service p-mysql $db_plan $DEFAULT_DB_NAME
+    cf bind-service ${APP_NAME}-${APP_VERSION} $DEFAULT_DB_NAME
+  fi
+}
+
+function restart_app() {
+CF_TRACE=true cf restart ${APP_NAME}-${APP_VERSION}
+  if [ "$?" -ne "0" ]; then
+    log_debug "App start failed..."
+    cf logs ${APP_NAME}-${APP_VERSION} --recent
+  fi
+}
+
+function wait_till_running() {
+  for i in `seq 1  6`
+  do
+    CF_TRACE=true cf app ${APP_NAME}-${APP_VERSION} | grep RUNNING | grep ${APP_NAME}-${APP_VERSION}
+    if [ "$?" -ne "0" ]; then
+      log_debug "App not running yet..."
+      sleep 10
+    else
+      log_debug "App now up and running ..."
+      break
+    fi
+  done
+}
+
+function check_catalog() {
+    app_catalog_url=${SCHEME}://${APP_URI}.${APP_DOMAIN}/v2/catalog
+    catalog_output=`curl -kv -H "X-Broker-Api-Version: 2.3" -H "Content-type: application/json" -u "${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}"  -X GET ${app_catalog_url} 2>/dev/null`
+    log_debug "Oracle Service Broker App Catalog output : $catalog_output"
+}
+
+function add_env_vars() {
+  # Adding additional properties that most spring based apps or internal apps seem to be expecting
+  cf set-env ${APP_NAME}-${APP_VERSION} SECURITY_USER_NAME $SECURITY_USER_NAME
+  cf set-env ${APP_NAME}-${APP_VERSION} SECURITY_USER_PASSWORD $SECURITY_USER_PASSWORD
+  cf set-env ${APP_NAME}-${APP_VERSION} SUBWAY_USERNAME $SECURITY_USER_NAME
+  cf set-env ${APP_NAME}-${APP_VERSION} SUBWAY_PASSWORD $SECURITY_USER_PASSWORD
+  <% if properties.oracle_xe_broker.service.service_addr %>
+    <%  p("oracle_xe_broker.service.service_addr").each do |ip_addr| %>
+      export XE_HOST_ADDR=<%="#{ip_addr}"%>
+      export XE_HOST_ADDR_MOD=`echo $XE_HOST_ADDR | sed -e 's/\./_/g' `
+      export BACKEND_BROKER_APP_URI=${INTERNAL_BROKER_APP_URI}_${XE_HOST_ADDR_MOD}.${APP_DOMAIN}
+
+      # Check if Subway can support https
+      # Need to add ignore verification
+      # Also, had to pass in X-Broker-Api_Version header
+      #cf set-env ${APP_NAME}-${APP_VERSION} BACKEND_BROKER_${XE_HOST_ADDR_MOD} http://${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}@${BACKEND_BROKER_APP_URI}
+      cf set-env ${APP_NAME}-${APP_VERSION} BACKEND_BROKER_${XE_HOST_ADDR_MOD} ${SCHEME}://${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}@${BACKEND_BROKER_APP_URI}
+
+    <% end %>
+  <% end %>
+}
+
+# Use this only to bind any additional files/libraries or modify app contents
+function modify_app() {
+  pushd $PACKAGE_PATH
+
+  cp ${PACKAGE_PATH}/lib/${APP_PREFIX_NAME}*.${EXTENSION_TYPE}  ${PACKAGE_PATH}/${TARGET_APP}
+
+  popd
+}
+
+function delete_prev_app_instance() {
+
+  cf apps | grep ${APP_NAME}-${APP_VERSION}
+  existing_app_check=$?
+
+  if [ "$existing_app_check" == "0" ]; then
+
+    # Look for User-Provided env variables and stop after the first blank line after that
+    cf env ${APP_NAME}-${APP_VERSION} | awk 'f{print}/User-Provided/{f=1};/^ *$/{f=0}' \
+                | grep '.' | awk -F ':' '{print $1}' | while read env_variable_name
+    do
+      cf unset-env $env_variable_name
+    done
+    cf delete -f ${APP_NAME}-${APP_VERSION}  > /dev/null
+  fi
+}
+
+function push_app() {
+  pushd $PACKAGE_PATH
+    mkdir -p /var/vcap/data/tmp
+    export TMPDIR=/var/vcap/data/tmp
+
+    # Cleanup any older version of the app
+    <% if properties.delete_prev_app_instance%>
+    delete_prev_app_instance
+    <% end %>
+
+    CF_TRACE=true cf push ${APP_NAME}-${APP_VERSION} -p ${PACKAGE_PATH}/${TARGET_APP} -n ${APP_URI} -d ${APP_DOMAIN} -t ${APP_PUSH_TIMEOUT} -k ${APP_PUSH_DISK}M -m 256M --no-start
+    if [ "$?" -ne "0" ]; then
+      log_debug "App push failed..."
+      cf logs ${APP_NAME}-${APP_VERSION} --recent
+    fi
+  popd
+}
+
+cf -v
+authenticate_and_target
+create_open_security_group
+#create_quota
+
+modify_app
+push_app
+add_env_vars
+
+restart_app
+wait_till_running
+check_catalog

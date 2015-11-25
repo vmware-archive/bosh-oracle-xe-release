@@ -1,0 +1,254 @@
+#!/bin/bash
+set +e -x
+
+
+SCRIPT_DIR=$(dirname $0)
+. $SCRIPT_DIR/init.sh
+
+export BROKER_USER=<%= properties.oracle_xe_broker.broker.user %>
+export BROKER_PASSWD=<%= properties.oracle_xe_broker.broker.password %>
+export SECURITY_USER_NAME=<%= properties.oracle_xe_broker.broker.user %>
+export SECURITY_USER_PASSWORD=<%= properties.oracle_xe_broker.broker.password %>
+
+export CREATE_OPEN_SECURITY_GROUP=<%= properties.oracle_xe_broker.create_open_security_group %>
+
+export EXPLODED_APP_FOLDER="exploded-app-contents"
+
+# Override for internal java service broker app
+export APP_PUSH_TIMEOUT=180
+export APP_PUSH_MEMORY=750
+export APP_PUSH_DISK=1024
+
+### CUSTOM_VARIABLE_BEGIN_MARKER
+export SERVICEBROKER_SERVICEID=<%= properties.oracle_xe_broker.SERVICEBROKER_SERVICEID %>
+
+### CUSTOM_VARIABLE_END_MARKER
+
+export CF_HOME=`pwd`/home/cf
+mkdir -p $CF_HOME
+
+# Following variables would be replaced based on blobs that get added and are considered as app bits
+# Modify extension type for App file - modify as needed
+
+APP_PREFIX_NAME=oracle-service-broker
+EXTENSION_TYPE=jar
+TARGET_APP=${APP_PREFIX_NAME}.${EXTENSION_TYPE}
+JOB_NAME=deploy-service-broker
+PACKAGE_NAME_SUFFIX=service_broker
+PACKAGE_PATH=`echo /var/vcap/packages/oracle_${PACKAGE_NAME_SUFFIX}`
+
+RUN_DIR=/var/vcap/sys/run/$JOB_NAME
+LOG_DIR=/var/vcap/sys/log/$JOB_NAME
+PIDFILE=${RUN_DIR}/pid
+
+export DEBUG_LOG=$LOG_DIR/deploy-service-broker.log
+mkdir -p $RUN_DIR $LOG_DIR
+chown -R vcap:vcap $RUN_DIR $LOG_DIR
+
+function log_debug() {
+  echo `date` $1 >> $DEBUG_LOG
+}
+
+function authenticate_and_target() {
+  cf api $API_ENDPOINT <% if properties.ssl.skip_cert_verify %>--skip-ssl-validation<% end %>
+  cf auth $ADMIN_USER $ADMIN_PASSWORD
+  cf create-org $ORG
+  cf target -o $ORG
+  cf create-space $SPACE
+  cf target -s $SPACE
+}
+
+function create_quota() {
+  cf create-quota $QUOTA -m ${ORG_QUOTA}m -r 10 -s 10
+  cf update-quota $QUOTA -m ${ORG_QUOTA}m -r 10 -s 10 --disallow-paid-service-plans
+  cf set-quota $ORG $QUOTA
+}
+
+function create_open_security_group() {
+  if [ "${CREATE_OPEN_SECURITY_GROUP}" == "true" ]; then
+    echo "Creating open security group"
+
+    cf create-security-group all_open $PACKAGE_PATH/templates/all_open.json
+    cf bind-running-security-group all_open
+  else
+    echo "Not creating open security group"
+  fi
+}
+
+function restart_app() {
+CF_TRACE=true cf restart ${APP_NAME}-${APP_VERSION}
+  if [ "$?" -ne "0" ]; then
+    log_debug "App start failed..."
+    cf logs ${APP_NAME}-${APP_VERSION} --recent
+  fi
+}
+
+function wait_till_running() {
+  for i in `seq 1  6`
+  do
+    CF_TRACE=true cf app ${APP_NAME}-${APP_VERSION} | grep RUNNING | grep ${APP_NAME}-${APP_VERSION}
+    if [ "$?" -ne "0" ]; then
+      log_debug "App not running yet..."
+      sleep 10
+    else
+      log_debug "App now up and running ..."
+      break
+    fi
+  done
+}
+
+function add_env_vars() {
+  # Adding additional properties that most spring based apps or internal apps seem to be expecting
+  cf set-env ${APP_NAME}-${APP_VERSION} SECURITY_USER_NAME $SECURITY_USER_NAME
+  cf set-env ${APP_NAME}-${APP_VERSION} SECURITY_USER_PASSWORD $SECURITY_USER_PASSWORD
+
+  cf set-env ${APP_NAME}-${APP_VERSION} oracle_host ${XE_HOST_ADDR}
+  cf set-env ${APP_NAME}-${APP_VERSION} oracle_port ${XE_HOST_PORT}
+  cf set-env ${APP_NAME}-${APP_VERSION} oracle_service ${XE_SERVICE_SID}
+  cf set-env ${APP_NAME}-${APP_VERSION} dba_datasource_username ${XE_ADMIN_USER}
+  cf set-env ${APP_NAME}-${APP_VERSION} dba_datasource_password ${XE_ADMIN_PASSWD}
+  cf set-env ${APP_NAME}-${APP_VERSION} broker_datasource_username ${XE_SB_USER}
+  cf set-env ${APP_NAME}-${APP_VERSION} broker_datasource_password ${XE_SB_PASSWD}
+  cf set-env ${APP_NAME}-${APP_VERSION} broker_datasource_url "jdbc:oracle:thin:@${XE_HOST_ADDR}:${XE_HOST_PORT}:${XE_SERVICE_SID}"
+  cf set-env ${APP_NAME}-${APP_VERSION} dba_datasource_url "jdbc:oracle:thin:@${XE_HOST_ADDR}:${XE_HOST_PORT}:${XE_SERVICE_SID}"
+}
+
+function delete_prev_app_instance() {
+
+  cf apps | grep ${APP_NAME}-${APP_VERSION}
+  existing_app_check=$?
+
+  if [ "$existing_app_check" == "0" ]; then
+
+    # Look for User-Provided env variables and stop after the first blank line after that
+    cf env ${APP_NAME}-${APP_VERSION} | awk 'f{print}/User-Provided/{f=1};/^ *$/{f=0}' \
+                | grep '.' | awk -F ':' '{print $1}' | while read env_variable_name
+    do
+      cf unset-env $env_variable_name
+    done
+    cf delete -f ${APP_NAME}-${APP_VERSION}  > /dev/null
+  fi
+}
+
+function prepare_broker_app() {
+  pushd $ORACLE_SB_INSTALL_HOME
+
+  ORACLE_SB_APP=`ls lib/*.jar`
+  ORACLE_SB_APP_PATH=${ORACLE_SB_INSTALL_HOME}/${ORACLE_SB_APP}
+  ORACLE_SB_EXPLODED_APP_PATH=${ORACLE_SB_INSTALL_HOME}/exploded
+  mkdir -p $ORACLE_SB_EXPLODED_APP_PATH
+  cd $ORACLE_SB_EXPLODED_APP_PATH
+  log_debug "Located App at: ${ORACLE_SB_APP_PATH}"
+
+  unzip ${ORACLE_SB_APP_PATH}
+  log_debug "Extracted App contents under $ORACLE_SB_EXPLODED_APP_PATH"
+
+#  curl -k ${OJDBC_DRIVER_DOWNLOAD_URL} -o lib/ojdbc.jar
+#  if [ "$?" == "0" ]; then
+#    log_debug "Successfully downloaded Oracle JDBC Driver"
+#  else
+#    log_debug "Unable to download Oracle JDBC Driver from url: ${OJDBC_DRIVER_DOWNLOAD_URL}"
+#  fi
+
+#  log_debug "Added Oracle jdbc driver to App bits"
+  log_debug "Updated App with correct db connectivity information changes"
+
+  popd
+}
+
+function push_app() {
+  pushd $PACKAGE_PATH
+    mkdir -p /var/vcap/data/tmp
+    export TMPDIR=/var/vcap/data/tmp
+
+    # Cleanup any older version of the app
+    <% if properties.delete_prev_app_instance%>
+    delete_prev_app_instance
+    <% end %>
+
+    CF_TRACE=true cf push ${APP_NAME}-${APP_VERSION} -p ${ORACLE_SB_EXPLODED_APP_PATH} -n ${APP_URI} -d ${APP_DOMAIN} -t ${APP_PUSH_TIMEOUT} -m ${APP_PUSH_MEMORY}M -k ${APP_PUSH_DISK}M --no-start
+    if [ "$?" -ne "0" ]; then
+      log_debug "App push failed..."
+      cf logs ${APP_NAME}-${APP_VERSION} --recent
+    fi
+  popd
+}
+
+
+function populate_plans() {
+    # DB Profile would be created with the associated XE Instance IP but
+    # would choke on  the '.' between ips - change those into '_'
+    # Sample Profile name: oracle_broker_10_244_3_6 (spring app code adds oracle_broker_)
+
+    app_catalog_url=${SCHEME}://${APP_URI}.${APP_DOMAIN}/v2/catalog
+    catalog_output=`curl -kv -H "X-Broker-Api-Version: 2.3" -H "Content-type: application/json" -u "${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}"  -X GET ${app_catalog_url} 2>/dev/null`
+    log_debug "Oracle Internal Service Broker App Catalog output : $catalog_output"
+
+    #service_id=`echo $catalog_output | sed -e 's/"//g;s/name.*//;s/.*id://g;s/,//' `
+    service_id=`echo $catalog_output | sed -e 's/"//g'  | sed -e "s/name:/\nname:/g" | grep "id:" | grep services | sed -e "s/^.*id://g;s/,//" `
+    plan_id=`echo $catalog_output | sed -e 's/"//g'  | sed -e "s/name:/\nname:/g" | grep "id:" | grep plans | sed -e "s/^.*id://g;s/,//" `
+    log_debug "Catalog Service Id : $service_id "
+
+    <% if properties.oracle_xe_broker.on_demand_service_plans %>
+      <%  p("oracle_xe_broker.on_demand_service_plans").each do |plan|
+             plan_name=plan['service_plan_name']
+             init_size=plan['init_space_size']
+             max_size=plan['max_space_size']
+             max_con_conn=plan['max_concurrent_conn']
+       %>
+        export PLAN_ID=<%="#{plan_name}"%>
+        export INIT_SPACE_SIZE=<%="#{init_size}"%>
+        export MAX_SPACE_SIZE=<%="#{max_size}"%>
+        export MAX_CONCURRENT_CONN=<%="#{max_con_conn}"%>
+
+        pushd $ORACLE_SB_INSTALL_HOME
+        cp templates/service_plan.json .
+        # DB Profile would be created with the associated XE Instance IP but
+        # would choke on  the '.' between ips - change those into '_'
+        # Sample Profile name: oracle_broker_10_244_3_6 (spring app code adds oracle_broker_)
+        #
+
+        sed -i.bak "s/PLAN_ID/${PLAN_ID}/g;                      \
+            s/XE_HOST_ADDR/${XE_HOST_ADDR}/g;                    \
+            s/INIT_SPACE_SIZE/${INIT_SPACE_SIZE}/g;              \
+            s/MAX_SPACE_SIZE/${MAX_SPACE_SIZE}/g;                \
+            s/MAX_CONCURRENT_CONN/${MAX_CONCURRENT_CONN}/g"      \
+            service_plan.json
+
+         log_debug "Copied over default service plan file template with ${PLAN_ID} and updated it"
+         new_plan=`cat service_plan.json`
+         log_debug "Contents of the plan: ${new_plan} "
+         plan_creation_output=`curl -kv -H "X-Broker-Api-Version: 2.3" -H "Content-type: application/json" -u "${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}" ${app_catalog_url}/services/${service_id}/plans -X POST -H "Content-Type:application/json" -d @${ORACLE_SB_INSTALL_HOME}/service_plan.json`
+         log_debug "Service Plan created!!"
+         log_debug "Service Plan details: ${plan_creation_output}"
+         popd
+       <% end %>
+    <% end %>
+}
+
+cf -v
+authenticate_and_target
+create_open_security_group
+create_quota
+prepare_broker_app
+
+# We want to have the same exact service and plan names... for each service broker tied to a separate XE instance
+# The service broker code would use a static service and plan ids..
+<% if properties.oracle_xe_broker.service.service_addr %>
+  <%  p("oracle_xe_broker.service.service_addr").each do |ip_addr| %>
+    export XE_HOST_ADDR=<%="#{ip_addr}"%>
+    export XE_HOST_ADDR_MOD=`echo $XE_HOST_ADDR | sed -e 's/\./_/g' `
+    echo "Going to push internal service broker app associated with XE instance running on ${XE_HOST_ADDR}"
+    export APP_NAME=${INTERNAL_BROKER_APP_NAME}_${XE_HOST_ADDR_MOD}
+    export APP_VERSION=${INTERNAL_BROKER_APP_VERSION}
+    export APP_URI=${INTERNAL_BROKER_APP_URI}_${XE_HOST_ADDR_MOD}
+    push_app
+    add_env_vars
+    restart_app
+    wait_till_running
+    populate_plans
+
+  <% end %>
+<% end %>
+
+

@@ -10,8 +10,8 @@ cp -r scripts ${BOSH_INSTALL_TARGET}/
 echo nameserver 8.8.8.8 >> /etc/resolv.conf
 
 mkdir ${BOSH_INSTALL_TARGET}/download
-if [ -e "oracle-xe" ]; then
-  cp -a oracle-xe/* ${BOSH_INSTALL_TARGET}/download
+if [ -e "oracle_xe" ]; then
+  cp -a oracle_xe/* ${BOSH_INSTALL_TARGET}/download
   pushd ${BOSH_INSTALL_TARGET}/download
 
   oracle-xe-zip=`ls ./oracle-xe*zip 2>/dev/null`

@@ -1,0 +1,48 @@
+#!/bin/bash
+set +e -x
+
+SCRIPT_DIR=$(dirname $0)
+. $SCRIPT_DIR/init.sh
+
+export BROKER_HOST=${SCHEME}://${APP_URI}.${APP_DOMAIN}
+
+function authenticate_and_target() {
+  cf api $API_ENDPOINT <% if properties.ssl.skip_cert_verify %>--skip-ssl-validation<% end %>
+  cf auth $ADMIN_USER $ADMIN_PASSWORD
+  cf target -o $ORG -s $SPACE
+}
+
+function register_broker() {
+  broker=`cf service-brokers | grep $BROKER_NAME || true`
+  if [[ -z "$broker" ]]; then
+    cf create-service-broker $BROKER_NAME $BROKER_USER $BROKER_PASSWD $BROKER_HOST
+  else
+    cf update-service-broker $BROKER_NAME $BROKER_USER $BROKER_PASSWD $BROKER_HOST
+  fi
+}
+
+function publicize_services() {
+  services_url=`cf curl /v2/services?q=label:$BROKER_NAME | grep service_plans_url | awk '{ print $2 }' | sed 's/[",]//g'`
+  if [ "$services_url" != "" ]; then
+    services=`cf curl $services_url | grep "\"url\"" | awk '{ print $2 }' | sed 's/[",]//g'`
+    for service in $services; do
+      publicize_service $service
+    done
+  elif [ "$BROKER_INTERNAL_SERVICE_NAMES" != "" ]; then
+    # Rely on the internal plan names if we cannot get it from the /v2/services on the broker
+    for service_name in `echo $BROKER_INTERNAL_SERVICE_NAMES | sed -e 's/,/ /g'`
+    do
+      cf enable-service-access $service_name
+    done
+  else
+    services=`cf service-access | awk "/${BROKER_NAME}/{flag=1;next}/broker: /{flag=0}flag" | egrep -v "access *orgs" | grep "."  | awk '{print $1}' `
+    for service_name in $services; do
+      cf enable-service-access $service_name
+    done
+  fi
+}
+
+cf -v
+authenticate_and_target
+register_broker
+publicize_services

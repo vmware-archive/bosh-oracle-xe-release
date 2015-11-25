@@ -1,0 +1,656 @@
+---
+name: oracle-xe                                            # [1]
+product_version: 11.2.0                                    # [1]
+label: Oracle Developer Edition (XE) Experimental
+description: Oracle XE Instance for application development and testing (experimental)...
+rank: 50
+metadata_version: '1.5'                                    # [2]
+icon_image: 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
+
+serial: false
+releases:                                                  # [5]
+- name: oracle-xe
+  version: '11.2'
+  file: oracle-xe-11.2.tgz
+
+# EDIT the stemcell version as required
+stemcell_criteria:                                                  # [3]
+  os: centos
+  version: '2881'
+  requires_cpi: false
+
+property_blueprints:                                   # [17]
+- name: encryption_key
+  type: secret
+- name: vm_credentials
+  type: salted_credentials
+  default:
+    identity: vcap
+- name: service_instance_limit
+  type: integer
+  configurable: true
+  default: 5
+  constraints:
+    min: 1
+- name: oracle_xe_download_url
+  type: string
+  configurable: true
+  #default: "http://12.1.1.1:7777/fileserver/oracle-xe/oracle-xe-11.2.0-1.0.x86_64.rpm.zip"
+  default: "https://10.85.29.16/oracle-xe-11.2.0-1.0.x86_64.rpm.zip"
+- name: org_quota
+  type: integer
+  configurable: false
+  default: 4096
+- name: memory
+  type: integer
+  configurable: false
+  default: 512
+- name: disk
+  type: integer
+  configurable: false
+  default: 1024
+- name: app_name
+  type: string
+  configurable: true
+  default: OracleServiceBroker
+- name: app_version
+  type: string
+  configurable: true
+  default: v1
+- name: internal_broker_app_version
+  type: string
+  configurable: false
+  default: v1
+- name: app_uri
+  type: string
+  configurable: true
+  default: oracle-xe-broker
+- name: internal_broker_app_name
+  type: string
+  configurable: false
+  default: InternalOracleServiceBroker
+- name: internal_broker_app_uri
+  type: string
+  configurable: false
+  default: internal-oracle-service-broker
+- name: create_open_security_group
+  type: boolean
+  configurable: true
+  default: false
+- name: listener_port
+  type: integer
+  configurable: true
+  default: 1521
+- name: pga_target
+  type: integer
+  configurable: true
+  default: 150
+  constraints:
+    min: 100
+- name: sga_target
+  type: integer
+  configurable: true
+  default: 550
+  constraints:
+    min: 400
+- name: system_password
+  type: secret
+  configurable: true
+- name: sb_user
+  type: string
+  configurable: true
+  default: servicebroker
+- name: sb_password
+  type: secret
+  configurable: true
+- name: default_tablespace_name
+  type: string
+  configurable: true
+  default: example
+- name: default_tablespace_size
+  type: integer
+  configurable: true
+  default: 256
+  constraints:
+     min: 256
+- name: app_listen_port
+  type: integer
+  configurable: true
+  default: 9000
+- name: min_heap
+  type: integer
+  configurable: true
+  default: 512
+- name: max_heap
+  type: integer
+  configurable: true
+  default: 512
+  constraints:
+     min: 512
+- name: on_demand_service_plans_collection
+  type: collection
+  configurable: true
+  # Needs to have its own inner/nested property_blueprints when its a collection
+  property_blueprints:
+  - name: guid
+    type: uuid
+    optional: false
+    unique: true
+  - name: service_plan_name
+    type: string
+    configurable: true
+    default: "Standard"
+  - name: init_space_size
+    type: integer
+    configurable: true
+    default: 20
+    constraints:
+       min: 20
+  - name: max_space_size
+    type: integer
+    configurable: true
+    default: 512
+  - name: max_concurrent_conn
+    type: integer
+    configurable: true
+    default: 5
+    constraints:
+       min: 5
+
+form_types:                                                # [8]
+- property_inputs:                                       # [9]
+  - reference: .properties.oracle_xe_download_url
+    label: Oracle XE Binary Download URL
+    description: 'Enter the download url for the Oracle XE Install (in rpm format & downloadable without auth)'
+  - reference: .properties.listener_port
+    label: Oracle XE Instance Listener Port
+    description: 'Enter the listener port for the Oracle XE Instance'
+  - reference: .properties.system_password
+    label: Oracle XE System Password
+    description: 'Enter the system credential for the Oracle XE Instance'
+  - reference: .properties.sga_target
+    label: Oracle XE SGA Memory (MB)
+    description: 'Enter the SGA Memory Size in MB for the Oracle XE Instance'
+  - reference: .properties.pga_target
+    label: Oracle XE PGA Memory (MB)
+    description: 'Enter the PGA Memory Size in MB for the Oracle XE Instance'
+  name: oracle-xe
+  label: Oracle Developer Edition
+  description: Oracle XE configuration
+
+- property_inputs:                                    # [9]
+  - reference: ".properties.app_name"
+    label: Service Broker Application Name
+    description: 'Enter the name for the Service Broker App'
+  - reference: ".properties.app_version"
+    label: Service Broker Application version
+    description: 'Enter the version of the Service Broker App (Final app name would include app version like ${appName}-${appversion}'
+  - reference: ".properties.app_uri"
+    label: Service Broker Application URI
+    description: 'Enter the uri/endpoint for the Service Broker app (on push to CF)'
+  - reference: ".properties.create_open_security_group"
+    label: Open up Security Groups
+    description: 'Open up security group on CF for Service Broker to access other apps or CF Cloud Controller'
+  - reference: .properties.sb_user
+    label: Service Broker Username on the Oracle XE
+    description: 'Enter a name for the Service Broker user on the Oracle XE Instance'
+  - reference: .properties.sb_password
+    label: Service Broker Password on the Oracle XE
+    description: 'Enter password for the Service Broker user in the Oracle XE Instance'
+  name: oracle-xe-sb
+  label: Oracle XE Service Broker App
+  description: Oracle XE Service Broker configuration
+
+- property_inputs:
+  - reference: .properties.on_demand_service_plans_collection
+    label: On-Demand Service Plans
+    property_inputs:
+    - reference: service_plan_name
+      label: Service Plan Name
+      description: "The Name of Plan (would be used by CLI and Web Console of Elastic Runtime's services marketplace; use short name)."
+    - reference: init_space_size
+      label: Initial Tablespace size in MB (will increase in increments till it reaches max size)
+      description: 'Enter the Initial tablespace size in MB for the plan on the Oracle XE Instance'
+    - reference: max_space_size
+      label: Max Tablespace size in MB (starts off at initial size and increases to max specified)
+      description: 'Enter the Maximum tablespace size in MB allowed for the plan on the Oracle XE Instance'
+    - reference: max_concurrent_conn
+      label: Max concurrent connections
+      description: 'Enter the number of maximum concurrent connections allowed under the plan'
+  name: on_demand_service_plans
+  label: On-Demand Service Plans
+  description: "An on-demand service plan lets Pivotal CF users create their own Service Plans from the Pivotal CF command line interface or developer console. Use this page to configure the service plan's settings."
+
+job_types:                                                 # [11]
+- name: oracle_xe
+  resource_label: Oracle-XE
+  templates:
+  - name: oracle_xe_node
+    release: oracle-xe
+  resource_definitions:                                  # [12]
+  - name: ram
+    type: integer
+    configurable: true
+    default: 4096
+  - name: ephemeral_disk
+    type: integer
+    configurable: true
+    default: 10_240
+  - name: persistent_disk
+    type: integer
+    configurable: true
+    default: 10_240
+  - name: cpu
+    type: integer
+    configurable: true                                 # [13]
+    default: 2
+  static_ip: 1                                           # [14]
+  dynamic_ip: 0
+  max_in_flight: 1                                       # [15]
+  serial: false                                          # [16]
+  instance_definitions:
+  - name: instances
+    type: integer
+    configurable: true
+    default: 1
+  property_blueprints:
+  - name: vm_credentials
+    type: salted_credentials
+    default:
+      identity: vcap
+  manifest: |                                            # [19]
+    domain: (( ..cf.cloud_controller.system_domain.value ))
+    app_domains:
+      - (( ..cf.cloud_controller.apps_domain.value ))
+    cf:
+      admin_user: (( ..cf.uaa.system_services_credentials.identity ))
+      admin_password: (( ..cf.uaa.system_services_credentials.password ))
+    ssl:
+      skip_cert_verify: (( ..cf.ha_proxy.skip_cert_verify.value ))
+    uaa:
+      url: https://uaa.(( ..cf.cloud_controller.system_domain.value ))
+      clients:
+        oracle_xe_broker:
+          secret: test
+    oracle_xe:
+      download_url: (( .properties.oracle_xe_download_url.value ))
+      listener:
+        port: (( .properties.listener_port.value ))
+      memory:
+        pga_target: (( .properties.pga_target.value ))
+        sga_target: (( .properties.sga_target.value ))
+      sysuser: (( .properties.system_password.value ))
+      ootb:
+       tablespace:
+         name: (( .properties.default_tablespace_name.value ))
+         size: (( .properties.default_tablespace_size.value ))
+       user:
+         name: (( .properties.sb_user.value ))
+         passwd: (( .properties.sb_password.value ))
+    oracle_xe_broker:
+      app_name: (( .properties.app_name.value ))
+      app_version: (( .properties.app_version.value ))
+      app_uri: (( .properties.app_uri.value ))
+      create_open_security_group: (( .properties.create_open_security_group.value ))
+      app_push:
+        org_quota: (( .properties.org_quota.value ))
+        timeout: 180
+        memory: (( .properties.memory.value ))
+        disk: (( .properties.disk.value ))
+      internal_broker_app_name: (( .properties.internal_broker_app_name.value ))
+      internal_broker_app_version: (( .properties.internal_broker_app_version.value ))
+      internal_broker_app_uri: (( .properties.internal_broker_app_uri.value ))
+      encryption_key: (( .properties.encryption_key.value ))
+      broker:
+        user: (( .deploy-service-broker.broker_credentials.identity ))
+        password: (( .deploy-service-broker.broker_credentials.password ))
+      service:
+        service_addr: (( .oracle_xe.ips ))
+        service_port: (( .properties.listener_port.value ))
+        service_sid: XE
+      credentials:
+        system:
+          username: system
+          passwd: (( .properties.system_password.value ))
+        sbuser:
+          username: (( .properties.sb_user.value ))
+          passwd: (( .properties.sb_password.value ))
+      on_demand_service_plans: (( .properties.on_demand_service_plans_collection.value ))
+
+- name: deploy-service-broker
+  resource_label: Deploy Subway and Backend Oracle-XE Service Broker
+  templates:
+  - name: deploy-service-broker
+    release: oracle-xe
+  errand: true
+  resource_definitions:                                  # [12]
+  - name: ram
+    type: integer
+    configurable: true
+    default: 1024
+  - name: ephemeral_disk
+    type: integer
+    configurable: true
+    default: 2048
+  - name: persistent_disk
+    type: integer
+    configurable: false
+    default: 0
+  - name: cpu
+    type: integer
+    configurable: true                                 # [13]
+    default: 2
+  static_ip: 0                                           # [14]
+  dynamic_ip: 1
+  max_in_flight: 1                                       # [15]
+  serial: true                                          # [16]
+  instance_definitions:
+  - name: instances
+    type: integer
+    configurable: false
+    default: 1
+  property_blueprints:
+  - name: vm_credentials
+    type: salted_credentials
+    default:
+      identity: vcap
+  - name: broker_credentials
+    type: salted_credentials
+  manifest: |                                            # [19]
+    domain: (( ..cf.cloud_controller.system_domain.value ))
+    app_domains:
+      - (( ..cf.cloud_controller.apps_domain.value ))
+    cf:
+      admin_user: (( ..cf.uaa.system_services_credentials.identity ))
+      admin_password: (( ..cf.uaa.system_services_credentials.password ))
+    ssl:
+      skip_cert_verify: (( ..cf.ha_proxy.skip_cert_verify.value ))
+    uaa:
+      url: https://uaa.(( ..cf.cloud_controller.system_domain.value ))
+      clients:
+        oracle_xe_broker:
+          secret: test
+    oracle_xe:
+      download_url: (( .properties.oracle_xe_download_url.value ))
+      listener:
+        port: (( .properties.listener_port.value ))
+      memory:
+        pga_target: (( .properties.pga_target.value ))
+        sga_target: (( .properties.sga_target.value ))
+      sysuser: (( .properties.system_password.value ))
+      ootb:
+       tablespace:
+         name: (( .properties.default_tablespace_name.value ))
+         size: (( .properties.default_tablespace_size.value ))
+       user:
+         name: (( .properties.sb_user.value ))
+         passwd: (( .properties.sb_password.value ))
+    oracle_xe_broker:
+      app_name: (( .properties.app_name.value ))
+      app_version: (( .properties.app_version.value ))
+      app_uri: (( .properties.app_uri.value ))
+      create_open_security_group: (( .properties.create_open_security_group.value ))
+      app_push:
+        org_quota: (( .properties.org_quota.value ))
+        timeout: 180
+        memory: (( .properties.memory.value ))
+        disk: (( .properties.disk.value ))
+      internal_broker_app_name: (( .properties.internal_broker_app_name.value ))
+      internal_broker_app_version: (( .properties.internal_broker_app_version.value ))
+      internal_broker_app_uri: (( .properties.internal_broker_app_uri.value ))
+      encryption_key: (( .properties.encryption_key.value ))
+      broker:
+        user: (( .deploy-service-broker.broker_credentials.identity ))
+        password: (( .deploy-service-broker.broker_credentials.password ))
+      service:
+        service_addr: (( .oracle_xe.ips ))
+        service_port: (( .properties.listener_port.value ))
+        service_sid: XE
+      credentials:
+        system:
+          username: system
+          passwd: (( .properties.system_password.value ))
+        sbuser:
+          username: (( .properties.sb_user.value ))
+          passwd: (( .properties.sb_password.value ))
+      on_demand_service_plans: (( .properties.on_demand_service_plans_collection.value ))
+
+- name: register-broker
+  resource_label: Register Service Broker
+  templates:
+  - name: register-broker
+    release: oracle-xe
+  errand: true
+  resource_definitions:                                  # [12]
+  - name: ram
+    type: integer
+    configurable: true
+    default: 1024
+  - name: ephemeral_disk
+    type: integer
+    configurable: true
+    default: 2048
+  - name: persistent_disk
+    type: integer
+    configurable: false
+    default: 0
+  - name: cpu
+    type: integer
+    configurable: true                                 # [13]
+    default: 2
+  static_ip: 0                                           # [14]
+  dynamic_ip: 1
+  max_in_flight: 1                                       # [15]
+  serial: true                                          # [16]
+  instance_definitions:
+  - name: instances
+    type: integer
+    configurable: false
+    default: 1
+  property_blueprints:
+  - name: vm_credentials
+    type: salted_credentials
+    default:
+      identity: vcap
+  manifest: |                                            # [19]
+    domain: (( ..cf.cloud_controller.system_domain.value ))
+    app_domains:
+      - (( ..cf.cloud_controller.apps_domain.value ))
+    ssl:
+      skip_cert_verify: (( ..cf.ha_proxy.skip_cert_verify.value ))
+    uaa:
+      url: https://uaa.(( ..cf.cloud_controller.system_domain.value ))
+      clients:
+        oracle_xe_broker:
+          secret: test
+    oracle_xe:
+      download_url: (( .properties.oracle_xe_download_url.value ))
+      listener:
+        port: (( .properties.listener_port.value ))
+      memory:
+        pga_target: (( .properties.pga_target.value ))
+        sga_target: (( .properties.sga_target.value ))
+      sysuser: (( .properties.system_password.value ))
+      ootb:
+       tablespace:
+         name: (( .properties.default_tablespace_name.value ))
+         size: (( .properties.default_tablespace_size.value ))
+       user:
+         name: (( .properties.sb_user.value ))
+         passwd: (( .properties.sb_password.value ))
+    oracle_xe_broker:
+      app_name: (( .properties.app_name.value ))
+      app_version: (( .properties.app_version.value ))
+      app_uri: (( .properties.app_uri.value ))
+      create_open_security_group: (( .properties.create_open_security_group.value ))
+      app_push:
+        org_quota: (( .properties.org_quota.value ))
+        timeout: 180
+        memory: (( .properties.memory.value ))
+        disk: (( .properties.disk.value ))
+      internal_broker_app_name: (( .properties.internal_broker_app_name.value ))
+      internal_broker_app_version: (( .properties.internal_broker_app_version.value ))
+      internal_broker_app_uri: (( .properties.internal_broker_app_uri.value ))
+      encryption_key: (( .properties.encryption_key.value ))
+      broker:
+        user: (( .deploy-service-broker.broker_credentials.identity ))
+        password: (( .deploy-service-broker.broker_credentials.password ))
+      service:
+        service_addr: (( .oracle_xe.ips ))
+        service_port: (( .properties.listener_port.value ))
+        service_sid: XE
+      credentials:
+        system:
+          username: system
+          passwd: (( .properties.system_password.value ))
+        sbuser:
+          username: (( .properties.sb_user.value ))
+          passwd: (( .properties.sb_password.value ))
+      on_demand_service_plans: (( .properties.on_demand_service_plans_collection.value ))
+
+- name: destroy-broker
+  resource_label: Deregister the Service Broker
+  templates:
+  - name: destroy-broker
+    release: oracle-xe
+  errand: true
+  resource_definitions:                                  # [12]
+  - name: ram
+    type: integer
+    configurable: true
+    default: 1024
+  - name: ephemeral_disk
+    type: integer
+    configurable: true
+    default: 2048
+  - name: persistent_disk
+    type: integer
+    configurable: false
+    default: 0
+  - name: cpu
+    type: integer
+    configurable: true                                 # [13]
+    default: 2
+  static_ip: 0                                           # [14]
+  dynamic_ip: 1
+  max_in_flight: 1                                       # [15]
+  serial: true                                          # [16]
+  instance_definitions:
+  - name: instances
+    type: integer
+    configurable: false
+    default: 1
+  property_blueprints:
+  - name: vm_credentials
+    type: salted_credentials
+    default:
+      identity: vcap
+  manifest: |                                            # [19]
+    domain: (( ..cf.cloud_controller.system_domain.value ))
+    app_domains:
+      - (( ..cf.cloud_controller.apps_domain.value ))
+    cf:
+      admin_user: (( ..cf.uaa.system_services_credentials.identity ))
+      admin_password: (( ..cf.uaa.system_services_credentials.password ))
+    ssl:
+      skip_cert_verify: (( ..cf.ha_proxy.skip_cert_verify.value ))
+    uaa:
+      url: https://uaa.(( ..cf.cloud_controller.system_domain.value ))
+      clients:
+        oracle_xe_broker:
+          secret: test
+    oracle_xe:
+      download_url: (( .properties.oracle_xe_download_url.value ))
+      listener:
+        port: (( .properties.listener_port.value ))
+      memory:
+        pga_target: (( .properties.pga_target.value ))
+        sga_target: (( .properties.sga_target.value ))
+      sysuser: (( .properties.system_password.value ))
+      ootb:
+       tablespace:
+         name: (( .properties.default_tablespace_name.value ))
+         size: (( .properties.default_tablespace_size.value ))
+       user:
+         name: (( .properties.sb_user.value ))
+         passwd: (( .properties.sb_password.value ))
+    oracle_xe_broker:
+      app_name: (( .properties.app_name.value ))
+      app_version: (( .properties.app_version.value ))
+      app_uri: (( .properties.app_uri.value ))
+      create_open_security_group: (( .properties.create_open_security_group.value ))
+      app_push:
+        org_quota: (( .properties.org_quota.value ))
+        timeout: 180
+        memory: (( .properties.memory.value ))
+        disk: (( .properties.disk.value ))
+      internal_broker_app_name: (( .properties.internal_broker_app_name.value ))
+      internal_broker_app_version: (( .properties.internal_broker_app_version.value ))
+      internal_broker_app_uri: (( .properties.internal_broker_app_uri.value ))
+      encryption_key: (( .properties.encryption_key.value ))
+      broker:
+        user: (( .deploy-service-broker.broker_credentials.identity ))
+        password: (( .deploy-service-broker.broker_credentials.password ))
+      service:
+        service_addr: (( .oracle_xe.ips ))
+        service_port: (( .properties.listener_port.value ))
+        service_sid: XE
+      credentials:
+        system:
+          username: system
+          passwd: (( .properties.system_password.value ))
+        sbuser:
+          username: (( .properties.sb_user.value ))
+          passwd: (( .properties.sb_password.value ))
+      on_demand_service_plans: (( .properties.on_demand_service_plans_collection.value ))
+
+
+- name: compilation
+  resource_label: compilation
+  resource_definitions:
+   - name: ram
+     type: integer
+     configurable: true
+     default: 4_096
+   - name: ephemeral_disk
+     type: integer
+     configurable: true
+     default: 8_192
+
+   - name: persistent_disk
+     type: integer
+     configurable: false
+     default: 0
+
+   - name: cpu
+     type: integer
+     configurable: true
+     default: 2
+
+  static_ip: 0
+  dynamic_ip: 1
+  max_in_flight: 1
+
+  instance_definitions:
+    - name: instances
+      type: integer
+      default: 1
+
+update:
+  canaries: 1
+  canary_watch_time: 60000-900000
+  max_in_flight: 1
+  update_watch_time: 60000-900000
+
+requires_product_versions:
+- name: cf
+  version: "~> 1.3"
+provides_product_versions:
+- name: oracle-xe
+  version: '11.2'
+post_deploy_errands:
+- name: deploy-service-broker
+- name: register-broker
+pre_delete_errands:
+- name: destroy-broker
+

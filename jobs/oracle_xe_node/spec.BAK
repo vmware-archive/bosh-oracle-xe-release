@@ -1,0 +1,117 @@
+---
+name: oracle_xe_node
+
+packages:
+- oracle_xe
+- cf_cli
+
+templates:
+  init.sh.erb: bin/init
+  oracle_xe_ctl.erb: bin/oracle_xe_ctl
+  deploy.sh.erb: bin/deploy-broker
+  register.sh.erb: bin/register-broker
+  destroy.sh.erb: bin/destroy-broker
+
+properties:
+  oracle_xe.xe_install_download_url:
+    description: "URL to download the Oracle XE Database Install in RPM format "
+  oracle_xe.listener.port:
+    description: "Port of the XE instance"
+    default: 1521
+  oracle_xe.memory.pga_target:
+    description: "PGA Target Memory Size "
+    default: 172M
+  oracle_xe.memory.sga_target:
+    description: "SGA Target Memory Size "
+    default: 576M
+  oracle_xe.sysuser:
+    description: "Password for the system admin of the Oracle XE instance"
+    default: welcome1
+  oracle_xe.ootb.tablespace.name:
+    description: "Name of the default OOTB tablespace"
+    default: example
+  oracle_xe.ootb.tablespace.size:
+    description: "Size of the default OOTB tablespace in MB"
+    default: 200
+  oracle_xe.ootb.user.name:
+    description: "Name of the default OOTB user"
+    default: servicebroker
+  oracle_xe.ootb.user.passwd:
+    description: "Password of the default OOTB user"
+    default: s3cr3t
+  ssl.skip_cert_verify:
+    description: "Whether to verify SSL certs when making web requests"
+  domain:
+    description: "The CF top-level domain"
+  app_domains:
+    description: "CloudFoundry application domains"
+  oracle_xe_broker.app_name:
+    description: "Name of the Service Broker Application"
+  oracle_xe_broker.app_version:
+    description: "Version of the Service Broker Application"
+  oracle_xe_broker.app_uri:
+    description: "Uri of the Service Broker Application"
+  oracle_xe_broker.cf.admin_user:
+    description: "Username of the CF admin user"
+  oracle_xe_broker.cf.admin_password:
+    description: "Password of the CF admin user"
+  oracle_xe_broker.broker.internal_service_names:
+    description: "name of in-built services in the Service Broker Application"
+  oracle_xe_broker.jdbc_driver_download_url:
+    description: "Download url for the jdbc driver"
+  oracle_xe_broker.listen_port:
+    description: "Listen Port of the SB App instance"
+  oracle_xe_broker.run_arg:
+    description: "Argument for kicking off the SB App instance"
+    default: "org.springframework.boot.loader.JarLauncher"
+  oracle_xe_broker.memory.min_heap:
+    description: "Min Heap in MB"
+    default: 1024
+  oracle_xe_broker.memory.max_heap:
+    description: "Max Heap in MB"
+    default: 1024
+  oracle_xe_broker.credentials.system.username:
+    description: "Username for the system admin of the Oracle XE instance"
+    default: system
+  oracle_xe_broker.credentials.system.passwd:
+    description: "Password for the system admin of the Oracle XE instance"
+    default: welcome1
+  oracle_xe_broker.credentials.sbuser.username:
+    description: "Username for the non-admin in the Oracle XE instance"
+    default: servicebroker
+  oracle_xe_broker.credentials.sbuser.passwd:
+    description: "Password for the non-admin in the Oracle XE instance"
+    default: s3cr3t
+  oracle_xe_broker.service.service_sid:
+    description: "Service Name for the Oracle XE instance"
+    default: XE
+  oracle_xe_broker.service.service_addr:
+    description: "Listen Address for the Oracle XE instance"
+  oracle_xe_broker.service.service_port:
+    description: "Listen Port for the Oracle XE instance"
+    default: 1521
+  oracle_xe_broker.on_demand_service_plans:
+    description: "Placeholder for an array of Service Plans "
+  oracle_xe_broker.create_open_security_group:
+    description: "Open security group for the app to access outside"
+    default: false
+  oracle_xe_broker.app_push.org_quota:
+    description: "Org Memory Quota for the Service Broker Application"
+    default: 1024
+  oracle_xe_broker.app_push.timeout:
+    description: "App Push timeout for the Service Broker Application"
+    default: 180
+  oracle_xe_broker.app_push.memory:
+    description: "App Push Memory limit for the Service Broker Application"
+    default: 512
+  oracle_xe_broker.encryption_key:
+    description: "Specifies the key to be used when encrypting sessions"
+  oracle_xe_broker.broker.user:
+    description: "Broker basic auth user"
+  oracle_xe_broker.broker.password:
+    description: "Broker basic auth password"
+  oracle_xe_broker.SECURITY_USER_NAME:
+    description: "Security User Name"
+    default: testuser
+  oracle_xe_broker.SECURITY_USER_PASSWORD:
+    description: "Security User Password"

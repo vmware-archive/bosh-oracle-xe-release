@@ -1,7 +1,7 @@
 check process oracle_xe
   with pidfile /var/vcap/sys/run/oracle_xe_node/pid
-  start program "/var/vcap/jobs/oracle_xe_node/bin/ctl start"
+  start program "/var/vcap/jobs/oracle_xe_node/bin/oracle_xe_ctl start"
     with timeout 420 seconds
-  stop program "/var/vcap/jobs/oracle_xe_node/bin/ctl stop"
+  stop program "/var/vcap/jobs/oracle_xe_node/bin/oracle_xe_ctl stop"
     with timeout 120 seconds
   group vcap

@@ -1,0 +1,8 @@
+---
+name: oracle_service_broker
+
+dependencies: []
+
+files:
+- templates/service_plan.json
+- oracle_service_broker/oracle-service-broker-0.1.0.jar

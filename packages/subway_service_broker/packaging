@@ -1,0 +1,15 @@
+# abort script on any command that exit with a non zero value
+set -e
+
+SUBWAY_SB_APP_DIR="cf_subway"
+archive=`ls ${SUBWAY_SB_APP_DIR}/*.zip`
+
+if [  "$archive" != "" ] ; then
+  echo "cf-subway zip found"
+else
+  echo "cf-subway zip not found"
+  exit 1
+fi
+
+mkdir -p  ${BOSH_INSTALL_TARGET}/lib
+cp ${archive} ${BOSH_INSTALL_TARGET}/lib

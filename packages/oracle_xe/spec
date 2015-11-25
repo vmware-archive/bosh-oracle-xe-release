@@ -1,5 +1,5 @@
 ---
-name: oracle-xe
+name: oracle_xe
 
 dependencies: []
 
@@ -9,3 +9,4 @@ files:
 - scripts/bin/setup_oracle_env.sh
 - scripts/sql/create_ootb_user.sql
 - scripts/sql/update_db_settings.sql
+- scripts/sql/shutdown.sql

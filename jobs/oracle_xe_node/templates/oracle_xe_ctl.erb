@@ -1,60 +1,8 @@
 #!/bin/bash
 set +e
 
-<%
-  def discover_external_ip
-    networks = spec.networks.marshal_dump
-    _, network = networks.find do |_name, network_spec|
-      network_spec.default
-    end
-    if !network
-      _, network = networks.first
-    end
-    if !network
-      raise "Could not determine IP via network spec: #{networks}"
-    end
-    network.ip
-  end
-  my_ip = discover_external_ip
-%>
-
-
-RUN_DIR=/var/vcap/sys/run/oracle_xe_node
-LOG_DIR=/var/vcap/sys/log/oracle_xe_node
-PIDFILE=${RUN_DIR}/pid
-
-mkdir -p $RUN_DIR $LOG_DIR
-chown -R vcap:vcap $RUN_DIR $LOG_DIR
-
-export ORACLE_XE_INSTALL_HOME=/var/vcap/packages/oracle-xe/
-
-# Not relying on network name to arrive at hostip
-# Set the ip to HOSTNAME to avoid listener getting bound to some internal only hostname
-export HOSTNAME=<%="#{my_ip}"%>
-export XE_HOST_IP=<%="#{my_ip}"%>
-
-export ORACLE_XE_DOWNLOAD_URL=<%=properties.oracle_xe.xe_install_download_url %>
-
-export XE_HOST_PORT=<%=properties.oracle_xe.listener.port %>
-export PGA_TARGET=<%=properties.oracle_xe.memory.pga_target %>
-export SGA_TARGET=<%=properties.oracle_xe.memory.sga_target %>
-
-export XE_SYS_USER=<%=properties.oracle_xe.sysuser %>
-
-export XE_DEFAULT_TABLESPACE_NAME=<%=properties.oracle_xe.ootb.tablespace.name %>
-export XE_DEFAULT_TABLESPACE_SIZE=<%=properties.oracle_xe.ootb.tablespace.size %>
-export XE_DEFAULT_USER=<%=properties.oracle_xe.ootb.user.name %>
-export XE_DEFAULT_PASSWD=<%=properties.oracle_xe.ootb.user.passwd %>
-
-export DEBUG_LOG=$LOG_DIR/oracle_xe_node.log
-
-touch $DEBUG_LOG
-chmod -R 755 /var/vcap/sys
-chmod 777 $DEBUG_LOG
-
-function log_debug() {
-  echo `date` $1 >> $DEBUG_LOG
-}
+SCRIPT_DIR=$(dirname $0)
+. $SCRIPT_DIR/init.sh
 
 log_debug "Kicking off ctl script as `whoami` with $1"
 log_debug "Download url provided: ${ORACLE_XE_DOWNLOAD_URL}"
@@ -80,7 +28,7 @@ case $1 in
 
     if [ ! -d "Disk1" ]; then
 
-      oracle_xe_zip=`ls ./oracle*zip 2>/dev/null`
+      oracle_xe_zip=`find . -maxdepth 1 -mindepth 1 -name "oracle*zip" `
       if [ "${oracle_xe_zip}" == "" ]; then
         installFile=`basename ${ORACLE_XE_DOWNLOAD_URL}`
         log_debug "Downloading Oracle Install from : ${ORACLE_XE_DOWNLOAD_URL}"
@@ -106,8 +54,7 @@ case $1 in
     fi
 
     if [ ! -e "/etc/init.d/oracle-xe" ]; then
-      ln -s /usr/bin/awk /bin/awk
-      mkdir /var/lock/subsys
+      mkdir -p /var/lock/subsys
       touch /var/lock/subsys/listener
 
       # Check for /var/vcap/store for persistence store
@@ -247,13 +194,21 @@ case $1 in
     /etc/init.d/oracle-xe start 2>&1 >> $DEBUG_LOG
     su -c "lsnrctl start" - oracle
     ps -ef | grep "tnslsnr LISTENER" | grep -v "grep" | awk ' { print $2 }'  > $PIDFILE
+
     ;;
 
   stop)
 
+    export ORACLE_ENV_SH=`find /u01/ -name oracle_env.sh`
+    export ORACLE_HOME=`dirname $ORACLE_ENV_SH`/..
+
     log_debug "Stopping the oracle-xe service "
+    su -c "sqlplus '/ as sysdba' @/tmp/shutdown.sql 2>&1 >> $DEBUG_LOG " - oracle
     su -c "lsnrctl stop" - oracle
+    $ORACLE_HOME/bin/lsnrctl stop LISTENER
     /etc/init.d/oracle-xe stop
+    listenerPid=`ps -ef | grep tnslsnr | grep -v grep | awk '{print $2}'`
+    kill -9 $listenerPid
 
     rm -f $PIDFILE
     ;;

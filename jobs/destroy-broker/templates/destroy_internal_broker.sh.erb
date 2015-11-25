@@ -1,0 +1,32 @@
+#! /bin/bash
+set +e -x
+
+SCRIPT_DIR=$(dirname $0)
+. $SCRIPT_DIR/init.sh
+
+function authenticate_and_target() {
+  cf api $API_ENDPOINT <% if properties.ssl.skip_cert_verify %>--skip-ssl-validation<% end %>
+  cf auth $ADMIN_USER $ADMIN_PASSWORD
+  cf target -o $ORG -s $SPACE
+}
+
+
+cf -v
+authenticate_and_target
+
+# There is nothing to delete in terms of services from the internal broker app
+# The subway broker would delete the registered services before proceeding with deletion of the internal broker apps
+# Just delete the app registered against each XE instance
+
+<% if properties.oracle_xe_broker.service.service_addr %>
+  <%  p("oracle_xe_broker.service.service_addr").each do |ip_addr| %>
+    export XE_HOST_ADDR=<%="#{ip_addr}"%>
+    export XE_HOST_ADDR_MOD=`echo $XE_HOST_ADDR | sed -e 's/\./_/g' `
+    echo "Going to delete internal service broker app associated with XE instance running on ${XE_HOST_ADDR}"
+    APP_NAME=${INTERNAL_BROKER_APP_NAME}_${XE_HOST_ADDR_MOD}
+    APP_VERSION=${INTERNAL_BROKER_APP_VERSION}
+    cf delete -f ${APP_NAME}-${APP_VERSION}
+
+  <% end %>
+<% end %>
+

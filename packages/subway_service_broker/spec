@@ -1,0 +1,7 @@
+---
+name: subway_service_broker
+
+dependencies: []
+
+files:
+- cf_subway/cf-subway.zip

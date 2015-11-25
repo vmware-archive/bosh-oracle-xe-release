@@ -1,0 +1,74 @@
+---
+name: destroy-broker
+templates:
+  init.sh.erb: bin/init.sh
+  destroy_subway_broker.sh.erb: bin/run
+  destroy_internal_broker.sh.erb: bin/destroy_internal_broker.sh
+packages:
+- cf_cli
+properties:
+  ssl.skip_cert_verify:
+    description: 'Whether to verify SSL certs when making web requests'
+  domain:
+    description: 'CloudFoundry system domain'
+  app_domains:
+    description: 'CloudFoundry application domains'
+  uaa.clients.oracle_xe_broker.secret:
+    description: 'UAA Client Secret'
+  cf.admin_user:
+    description: 'Username of the CF admin user'
+  cf.admin_password:
+    description: 'Password of the CF admin user'
+  oracle_xe_broker.app_name:
+    description: 'Name of the Service Broker Application'
+  oracle_xe_broker.app_version:
+    description: 'Version of the Service Broker Application'
+  oracle_xe_broker.app_uri:
+    description: 'Uri of the Service Broker Application'
+  oracle_xe_broker.internal_broker_app_name:
+    description: 'Name of the Internal Service Broker Application'
+  oracle_xe_broker.internal_broker_app_version:
+    description: 'Version of the Internal Service Broker Application'
+  oracle_xe_broker.internal_broker_app_uri:
+    description: 'Uri of the Internal Service Broker Application'
+  oracle_xe_broker.create_open_security_group:
+    description: 'Open security group for the app to access outside'
+    default: false
+  oracle_xe_broker.app_push.org_quota:
+    description: 'Org Memory Quota for the Service Broker Application'
+    default: 1024
+  oracle_xe_broker.app_push.timeout:
+    description: 'App Push timeout for the Service Broker Application'
+    default: 180
+  oracle_xe_broker.app_push.memory:
+    description: 'App Push Memory limit for the Service Broker Application'
+    default: 512
+  oracle_xe_broker.encryption_key:
+    description: 'Specifies the key to be used when encrypting sessions'
+  oracle_xe_broker.broker.user:
+    description: 'Broker basic auth user'
+  oracle_xe_broker.broker.password:
+    description: 'Broker basic auth password'
+  oracle_xe_broker.on_demand_service_plans:
+    description: 'On demand service plans '
+
+  oracle_xe_broker.credentials.system.username:
+    description: "Username for the system admin of the Oracle XE instance"
+    default: system
+  oracle_xe_broker.credentials.system.passwd:
+    description: "Password for the system admin of the Oracle XE instance"
+    default: welcome1
+  oracle_xe_broker.credentials.sbuser.username:
+    description: "Username for the non-admin in the Oracle XE instance"
+    default: servicebroker
+  oracle_xe_broker.credentials.sbuser.passwd:
+    description: "Password for the non-admin in the Oracle XE instance"
+    default: s3cr3t
+  oracle_xe_broker.service.service_sid:
+    description: "Service Name for the Oracle XE instance"
+    default: XE
+  oracle_xe_broker.service.service_addr:
+    description: "Listen Address for the Oracle XE instance"
+  oracle_xe_broker.service.service_port:
+    description: "Listen Port for the Oracle XE instance"
+    default: 1521

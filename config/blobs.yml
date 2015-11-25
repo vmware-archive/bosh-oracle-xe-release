@@ -1,9 +1,1 @@
----
-openjdk/openjdk-1.7.0_71.tar.gz:
-  object_id: 1f3cb16d-0350-4bc2-9ff8-973d3a884b06
-  sha: f10e858fec40629611493c31b919e4eb7b0b181f
-  size: 67043436
-oracle-service-broker/oracle-service-broker-0.1.0.jar:
-  object_id: 85bd6d9b-b732-4c19-a21e-45d3cbb34dba
-  sha: 00cea8407f1333c601894cdf5a7236daca6f0a1f
-  size: 21650866
+--- {}
