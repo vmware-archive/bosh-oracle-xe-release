@@ -14,9 +14,9 @@ Download the [Oracle XE Install] ( http://www.oracle.com/technetwork/database/da
 
 ## Adding the sources
 
-### Run fetch_cf_cli.sh script to download and add the cf linux binary as a blob to the BOSH release
+* Run fetch_cf_cli.sh script to download and add the cf linux binary as a blob to the BOSH release
 
-### Add the Oracle service broker app next as a blob using addOracleServiceBrokerBlob.sh
+* Add the Oracle service broker app next as a blob using addOracleServiceBrokerBlob.sh
 ```
 # Build the service broker app using the sources in the service-broker-srcs
 # Install the ojdbc driver using the install-jar.sh script
@@ -24,7 +24,7 @@ Download the [Oracle XE Install] ( http://www.oracle.com/technetwork/database/da
 ./addOracleServiceBrokerBlob.sh oracle-service-broker-0.1.0.jar
 ```
 
-### Add the Subway service broker app next as a blob using addSubwayServiceBrokerBlob.sh
+* Add the Subway service broker app next as a blob using addSubwayServiceBrokerBlob.sh
 ```
 # 
 # Use the modified version (to support https & non-verify) of subway available under service-broker-srcs

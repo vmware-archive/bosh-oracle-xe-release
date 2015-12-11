@@ -2,7 +2,7 @@
 
 TILE_VERSION=1.5
 TILE_FILE=`pwd`/*tile-v${TILE_VERSION}.yml
-TILE_NAME=Oracle-XE-Broker-v1.0.0-OpsMgrv${TILE_VERSION}.pivotal
+TILE_NAME=Oracle-XE-Broker-v0.1-OpsMgrv${TILE_VERSION}.pivotal
 RELEASE_TARFILE=`pwd`/releases/*/*.tgz
 
 mkdir -p tmp

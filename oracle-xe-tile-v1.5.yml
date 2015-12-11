@@ -1,6 +1,6 @@
 ---
 name: oracle-xe                                            # [1]
-product_version: 11.2.0                                    # [1]
+product_version: '0.1'
 label: Oracle Developer Edition (XE) Experimental
 description: Oracle XE Instance for application development and testing (experimental)...
 rank: 50
