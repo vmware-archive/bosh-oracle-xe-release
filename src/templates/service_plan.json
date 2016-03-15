@@ -2,6 +2,16 @@
 {
 "name" : "PLAN_ID",
 "description" : "PLAN_ID plan on XE_HOST_ADDR",
+"free": true,
+"cost": [
+  {
+    "amount": {
+      "usd": 0
+    },
+    "unit": "MONTHLY"
+  }
+],
+"planUpdateable": false,
 "metadata" : {
     "name" : "PLAN_ID",
     "displayName" : "PLAN_ID",

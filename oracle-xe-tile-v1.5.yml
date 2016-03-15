@@ -15,8 +15,8 @@ releases:                                                  # [5]
 
 # EDIT the stemcell version as required
 stemcell_criteria:                                                  # [3]
-  os: centos
-  version: '2881'
+  os: centos-7
+  version: '3146.9'
   requires_cpi: false
 
 property_blueprints:                                   # [17]
@@ -36,7 +36,7 @@ property_blueprints:                                   # [17]
   type: string
   configurable: true
   #default: "http://12.1.1.1:7777/fileserver/oracle-xe/oracle-xe-11.2.0-1.0.x86_64.rpm.zip"
-  default: "https://10.85.29.16/oracle-xe-11.2.0-1.0.x86_64.rpm.zip"
+  default: "https://some-public-address-reachable-by-bosh/oracle-xe-11.2.0-1.0.x86_64.rpm.zip"
 - name: org_quota
   type: integer
   configurable: false

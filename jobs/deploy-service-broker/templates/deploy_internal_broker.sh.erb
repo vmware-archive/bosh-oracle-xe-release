@@ -181,12 +181,12 @@ function populate_plans() {
     # Sample Profile name: oracle_broker_10_244_3_6 (spring app code adds oracle_broker_)
 
     app_catalog_url=${SCHEME}://${APP_URI}.${APP_DOMAIN}/v2/catalog
-    catalog_output=`curl -kv -H "X-Broker-Api-Version: 2.3" -H "Content-type: application/json" -u "${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}"  -X GET ${app_catalog_url} 2>/dev/null`
+    catalog_output=`curl -k -H "X-Broker-Api-Version: 2.3" -H "Content-type: application/json" -u "${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}"  -X GET ${app_catalog_url} 2>/dev/null`
     log_debug "Oracle Internal Service Broker App Catalog output : $catalog_output"
 
     #service_id=`echo $catalog_output | sed -e 's/"//g;s/name.*//;s/.*id://g;s/,//' `
+    #plan_id=`echo $catalog_output | sed -e 's/"//g'  | sed -e "s/name:/\nname:/g" | grep "id:" | grep plans | sed -e "s/^.*id://g;s/,//" `
     service_id=`echo $catalog_output | sed -e 's/"//g'  | sed -e "s/name:/\nname:/g" | grep "id:" | grep services | sed -e "s/^.*id://g;s/,//" `
-    plan_id=`echo $catalog_output | sed -e 's/"//g'  | sed -e "s/name:/\nname:/g" | grep "id:" | grep plans | sed -e "s/^.*id://g;s/,//" `
     log_debug "Catalog Service Id : $service_id "
 
     <% if properties.oracle_xe_broker.on_demand_service_plans %>
@@ -218,7 +218,12 @@ function populate_plans() {
          log_debug "Copied over default service plan file template with ${PLAN_ID} and updated it"
          new_plan=`cat service_plan.json`
          log_debug "Contents of the plan: ${new_plan} "
-         plan_creation_output=`curl -kv -H "X-Broker-Api-Version: 2.3" -H "Content-type: application/json" -u "${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}" ${app_catalog_url}/services/${service_id}/plans -X POST -H "Content-Type:application/json" -d @${ORACLE_SB_INSTALL_HOME}/service_plan.json`
+         plan_creation_output=`curl -kv -H "X-Broker-Api-Version: 2.3"                          \
+                                        -H "Content-type: application/json"                     \
+                                        -u "${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}"    \
+                                        -X POST -d @${ORACLE_SB_INSTALL_HOME}/service_plan.json \
+                                        ${app_catalog_url}/services/${service_id}/plans`
+
          log_debug "Service Plan created!!"
          log_debug "Service Plan details: ${plan_creation_output}"
          popd
@@ -237,11 +242,11 @@ prepare_broker_app
 <% if properties.oracle_xe_broker.service.service_addr %>
   <%  p("oracle_xe_broker.service.service_addr").each do |ip_addr| %>
     export XE_HOST_ADDR=<%="#{ip_addr}"%>
-    export XE_HOST_ADDR_MOD=`echo $XE_HOST_ADDR | sed -e 's/\./_/g' `
+    export XE_HOST_ADDR_MOD=`echo $XE_HOST_ADDR | sed -e 's/\./-/g' `
     echo "Going to push internal service broker app associated with XE instance running on ${XE_HOST_ADDR}"
-    export APP_NAME=${INTERNAL_BROKER_APP_NAME}_${XE_HOST_ADDR_MOD}
+    export APP_NAME=${INTERNAL_BROKER_APP_NAME}-${XE_HOST_ADDR_MOD}
     export APP_VERSION=${INTERNAL_BROKER_APP_VERSION}
-    export APP_URI=${INTERNAL_BROKER_APP_URI}_${XE_HOST_ADDR_MOD}
+    export APP_URI=${INTERNAL_BROKER_APP_URI}-${XE_HOST_ADDR_MOD}
     push_app
     add_env_vars
     restart_app

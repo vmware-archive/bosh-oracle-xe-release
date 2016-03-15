@@ -17,7 +17,6 @@ export CREATE_OPEN_SECURITY_GROUP=<%= properties.oracle_xe_broker.create_open_se
 export EXPLODED_APP_FOLDER="exploded-app-contents"
 
 ### CUSTOM_VARIABLE_BEGIN_MARKER
-export SERVICEBROKER_SERVICEID=<%= properties.oracle_xe_broker.SERVICEBROKER_SERVICEID %>
 
 ### CUSTOM_VARIABLE_END_MARKER
 
@@ -118,14 +117,15 @@ function add_env_vars() {
   <% if properties.oracle_xe_broker.service.service_addr %>
     <%  p("oracle_xe_broker.service.service_addr").each do |ip_addr| %>
       export XE_HOST_ADDR=<%="#{ip_addr}"%>
-      export XE_HOST_ADDR_MOD=`echo $XE_HOST_ADDR | sed -e 's/\./_/g' `
-      export BACKEND_BROKER_APP_URI=${INTERNAL_BROKER_APP_URI}_${XE_HOST_ADDR_MOD}.${APP_DOMAIN}
+      export XE_HOST_ADDR_MOD=`echo $XE_HOST_ADDR | sed -e 's/\./-/g' `
+      export XE_HOST_ADDR_UNDER_MOD=`echo $XE_HOST_ADDR | sed -e 's/\./_/g' `
+      export BACKEND_BROKER_APP_URI=${INTERNAL_BROKER_APP_URI}-${XE_HOST_ADDR_MOD}.${APP_DOMAIN}
 
       # Check if Subway can support https
       # Need to add ignore verification
       # Also, had to pass in X-Broker-Api_Version header
-      #cf set-env ${APP_NAME}-${APP_VERSION} BACKEND_BROKER_${XE_HOST_ADDR_MOD} http://${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}@${BACKEND_BROKER_APP_URI}
-      cf set-env ${APP_NAME}-${APP_VERSION} BACKEND_BROKER_${XE_HOST_ADDR_MOD} ${SCHEME}://${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}@${BACKEND_BROKER_APP_URI}
+      #cf set-env ${APP_NAME}-${APP_VERSION} BACKEND_BROKER_${XE_HOST_ADDR_UNDER_MOD} http://${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}@${BACKEND_BROKER_APP_URI}
+      cf set-env ${APP_NAME}-${APP_VERSION} BACKEND_BROKER_${XE_HOST_ADDR_UNDER_MOD} ${SCHEME}://${SECURITY_USER_NAME}:${SECURITY_USER_PASSWORD}@${BACKEND_BROKER_APP_URI}
 
     <% end %>
   <% end %>
