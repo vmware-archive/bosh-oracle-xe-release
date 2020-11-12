@@ -1,3 +1,5 @@
+# bosh-oracle-xe-release is no longer actively maintained by VMware.
+
 # BOSH Oracle XE Release (Experimental)
 
 BOSH Release for Oracle XE development database + Service Broker (Experimental)
